@@ -1,0 +1,22 @@
+{
+  "name": "sheets-addon",
+  "version": "1.0.0",
+  "description": "Google Sheets Add-on with custom functions",
+  "main": "dist/Code.js",
+  "scripts": {
+    "build": "node ../scripts/build-sheets.mjs",
+    "push": "clasp push",
+    "pull": "clasp pull",
+    "deploy": "clasp deploy",
+    "open": "clasp open"
+  },
+  "devDependencies": {
+    "@google/clasp": "^2.4.0",
+    "@types/google-apps-script": "^1.0.74",
+    "esbuild": "^0.23.0",
+    "typescript": "^4.9.5"
+  },
+  "dependencies": {
+    "@excel-plugin/shared": "file:../shared"
+  }
+}
