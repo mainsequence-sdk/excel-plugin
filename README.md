@@ -1,6 +1,11 @@
 # Main Sequence — Excel Add-in Skeleton (Spec)
 
-**Objective:** Build the skeleton and base of a project that will become the Excel add-in for **Main Sequence**. Main Sequence is a finance and data app that allows clients to unify and consume diverse sources of data and perform asset management operations.
+the main endpoint is
+https://dev-tsorm.ngrok.app
+
+**Objective:** Build the skeleton and base of a project that will become the Excel add-in for **Main Sequence**.
+Main Sequence is a finance and data app that allows clients to unify and consume diverse 
+sources of data and perform asset management operations.
 
 ---
 
@@ -338,4 +343,228 @@ async function callApi() {
 
 ### Task 2: Data Retrieval (Post-Authentication)
 
-- Once the user is authenticated, build a function that accepts `date_start` ...
+- The request should be done to :
+- 'http://ROOT/orm/api/ts_manager/dynamic_table/714/get_data_between_dates_from_remote/'
+with a json payload
+
+```
+"json": {
+                        "start_date": start_date.timestamp() if start_date else None,
+                        "end_date": end_date.timestamp() if end_date else None,
+                        "great_or_equal": great_or_equal,
+                        "less_or_equal": less_or_equal,
+                        "unique_identifier_list": unique_identifier_list,
+                        "columns": columns,
+                        "offset": offset,  # pagination offset
+                       
+                    }
+```
+
+the return is
+
+```typescript
+type ApiResponse<T = unknown> = {
+  results: T[];
+  limit: number;
+  offset: number;
+  returned_count: number;
+  next_offset: number | null;
+};
+```
+example return 
+```json
+{
+  "results": [
+    { "col_a": "value", "col_b": 123 },
+    { "col_a": "value2", "col_b": 456 }
+  ],
+  "limit": 100,
+  "offset": 0,
+  "returned_count": 2,
+  "next_offset": 100
+}
+```
+
+This is the LLM translation  of our python client to type script for you to take as a guideline
+
+```typescript
+// Types you can tweak to your domain
+export type TimestampSeconds = number;
+
+export interface DateRangeDescriptor {
+  start_date?: Date | TimestampSeconds;
+  end_date?: Date | TimestampSeconds;
+  // Allow arbitrary extra fields the server might accept
+  [key: string]: unknown;
+}
+
+export type UniqueIdentifierRangeMap = Record<string, DateRangeDescriptor>;
+
+export interface GetDataBetweenDatesParams {
+  start_date?: Date | TimestampSeconds | null;
+  end_date?: Date | TimestampSeconds | null;
+  great_or_equal?: boolean | null;
+  less_or_equal?: boolean | null;
+  unique_identifier_list?: Array<string | number> | null;
+  columns?: string[] | null;
+  unique_identifier_range_map?: UniqueIdentifierRangeMap | null;
+  // Present in the Python signature but not used in the payload there either:
+  column_range_descriptor?: UniqueIdentifierRangeMap | null;
+}
+
+export interface ApiResponse<T = unknown> {
+  results?: T[];
+  next_offset?: number | null;
+  // passthrough for any other fields
+  [key: string]: unknown;
+}
+
+export interface RequestOptions {
+  /** Base object URL, e.g. https://api.example.com/my-object */
+  objectBaseUrl: string;
+  /** The object id used in the Python f"/{self.id}/..." */
+  id: string | number;
+  /** Optional fetch to inject (Node <18 or custom). Defaults to global fetch. */
+  fetchImpl?: typeof fetch;
+  /** Extra headers to include on every POST. */
+  headers?: Record<string, string>;
+  /** Size of chunks for unique_identifier_range_map keys. Default: 100 */
+  chunkSize?: number;
+}
+
+/**
+ * Helper that mirrors the Python behavior:
+ * - POSTs JSON including an "offset" for pagination
+ * - Follows "next_offset" until it's null/undefined
+ * - If unique_identifier_range_map is present, splits into 100-key chunks and fetches per chunk
+ * - Converts Date objects to UNIX seconds
+ */
+export async function getDataBetweenDatesFromApi<T = unknown>(
+  params: GetDataBetweenDatesParams,
+  opts: RequestOptions
+): Promise<T[]> {
+  const {
+    objectBaseUrl,
+    id,
+    fetchImpl = fetch,
+    headers = {},
+    chunkSize = 100,
+  } = opts;
+
+  const url = `${objectBaseUrl}/${id}/get_data_between_dates_from_remote/`;
+
+  const toUnixSeconds = (d?: Date | number | null): number | null | undefined => {
+    if (d == null) return d as null | undefined;
+    if (d instanceof Date) return Math.floor(d.getTime() / 1000);
+    // assume it's already seconds if a number
+    return d;
+  };
+
+  // Shallow clone that preserves Date instances on values (good enough for the known fields).
+  const cloneRangeMap = (
+    map?: UniqueIdentifierRangeMap | null
+  ): UniqueIdentifierRangeMap | undefined => {
+    if (!map) return undefined;
+    const out: UniqueIdentifierRangeMap = {};
+    for (const [k, v] of Object.entries(map)) out[k] = { ...v };
+    return out;
+  };
+
+  // Normalize top-level dates to seconds (Python: .timestamp())
+  const startSeconds = toUnixSeconds(params.start_date);
+  const endSeconds = toUnixSeconds(params.end_date);
+
+  // Prepare (cloned) range map and convert any Date fields inside it to seconds
+  const rangeMap = cloneRangeMap(params.unique_identifier_range_map);
+  if (rangeMap) {
+    for (const dateInfo of Object.values(rangeMap)) {
+      if ("start_date" in dateInfo && dateInfo.start_date instanceof Date) {
+        dateInfo.start_date = Math.floor(dateInfo.start_date.getTime() / 1000);
+      }
+      if ("end_date" in dateInfo && dateInfo.end_date instanceof Date) {
+        dateInfo.end_date = Math.floor(dateInfo.end_date.getTime() / 1000);
+      }
+    }
+  }
+
+  // Inner helper: fetches one (possibly multi-offset) batch for a given chunked range map
+  const fetchOneBatch = async (
+    chunkRangeMap: UniqueIdentifierRangeMap | null | undefined
+  ): Promise<T[]> => {
+    const allResults: T[] = [];
+    let offset = 0;
+
+    // Follow next_offset just like the Python while True loop
+    // Break when next_offset is null/undefined
+    for (;;) {
+      const body = {
+        start_date: startSeconds ?? null,
+        end_date: endSeconds ?? null,
+        great_or_equal: params.great_or_equal ?? null,
+        less_or_equal: params.less_or_equal ?? null,
+        unique_identifier_list: params.unique_identifier_list ?? null,
+        columns: params.columns ?? null,
+        offset, // pagination offset (important!)
+        unique_identifier_range_map: chunkRangeMap ?? null,
+        // NOTE: The Python version does NOT send column_range_descriptor in the payload.
+        // To stay faithful, we keep it omitted here as well.
+      };
+
+      const resp = await fetchImpl(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...headers,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!resp.ok) {
+        // Mirror the Python "warning then return []" behavior
+        const text = await resp.text().catch(() => "");
+        console.warn(`Error in request: ${text || resp.statusText}`);
+        return [];
+      }
+
+      const data = (await resp.json()) as ApiResponse<T>;
+      const chunk = Array.isArray(data.results) ? data.results : [];
+      allResults.push(...chunk);
+
+      const next = (data as ApiResponse<T>).next_offset;
+      if (next === null || next === undefined) break;
+
+      offset = next;
+    }
+
+    return allResults;
+  };
+
+  const allResults: T[] = [];
+
+  // Python truthiness: only chunk if map exists AND has keys
+  const hasRangeMap =
+    !!rangeMap && Object.keys(rangeMap).length > 0;
+
+  if (hasRangeMap) {
+    const keys = Object.keys(rangeMap!);
+    for (let i = 0; i < keys.length; i += chunkSize) {
+      const slice = keys.slice(i, i + chunkSize);
+      const chunkMap: UniqueIdentifierRangeMap = {};
+      for (const k of slice) chunkMap[k] = rangeMap![k];
+
+      const chunkResults = await fetchOneBatch(chunkMap);
+      allResults.push(...chunkResults);
+    }
+  } else {
+    // Single batch with offset-based pagination only
+    const chunkResults = await fetchOneBatch(null);
+    allResults.push(...chunkResults);
+  }
+
+  return allResults;
+}
+
+```
+
+The final function should be call =GET_DATA_FROM_NODE(date_start,date_end,unique_identifier_list,great_or_equal,
+less_or_equal) where each argument is a cell 
