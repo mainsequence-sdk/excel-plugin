@@ -1,41 +1,122 @@
-const path = require('path');
-const Dotenv = require('dotenv-webpack');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
+/* eslint-disable no-undef */
 
-module.exports = {
-  entry: './src/functions/index.ts',
-  output: {
-    filename: 'index.js',
-    path: path.resolve(__dirname, 'dist'),
-    library: 'CustomFunctions',
-    libraryTarget: 'var'
-  },
-  resolve: {
-    extensions: ['.ts', '.js']
-  },
-  module: {
-    rules: [
-      { test: /\.ts$/, use: 'ts-loader', exclude: /node_modules/ }
-    ]
-  },
-  plugins: [
-    new Dotenv({ path: path.resolve(__dirname, '..', '.env') }),
-    new HtmlWebpackPlugin({
-      template: path.resolve(__dirname, 'src/ui/index.html'),
-      filename: 'index.html',
-      inject: false
-    }),
-    new CopyWebpackPlugin({
-      patterns: [
-        { from: path.resolve(__dirname, 'functions.json'), to: path.resolve(__dirname, 'dist', 'functions.json') }
-      ]
-    })
-  ],
-  devServer: {
-    static: { directory: path.join(__dirname, 'dist') },
-    compress: true,
-    port: 3000,
-    https: true
-  }
+const devCerts = require("office-addin-dev-certs");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
+const CustomFunctionsMetadataPlugin = require("custom-functions-metadata-plugin");
+const webpack = require("webpack");
+const Dotenv = require('dotenv-webpack');
+
+const urlDev = "https://localhost:3000/";
+const urlProd = "https://excelpluginpreview.vercel.app/"; // CHANGE THIS TO YOUR PRODUCTION DEPLOYMENT LOCATION
+
+async function getHttpsOptions() {
+  const httpsOptions = await devCerts.getHttpsServerOptions();
+  return { ca: httpsOptions.ca, key: httpsOptions.key, cert: httpsOptions.cert };
+}
+
+module.exports = async (env, options) => {
+  const dev = options.mode === "development";
+  const config = {
+    devtool: "source-map",
+    entry: {
+      polyfill: ["core-js/stable", "regenerator-runtime/runtime"],
+      react: ["react", "react-dom"],
+      taskpane: {
+        import: ["./src/taskpane/index.tsx", "./src/taskpane/taskpane.html"],
+        dependOn: "react",
+      },
+      functions: "./src/functions/functions.ts",
+    },
+    output: {
+      clean: true,
+    },
+    resolve: {
+      extensions: [".ts", ".tsx", ".html", ".js"],
+    },
+    module: {
+      rules: [
+        {
+          test: /\.ts$/,
+          exclude: /node_modules/,
+          use: {
+            loader: "babel-loader",
+          },
+        },
+        {
+          test: /\.tsx?$/,
+          exclude: /node_modules/,
+          use: ["ts-loader"],
+        },
+        {
+          test: /\.html$/,
+          exclude: /node_modules/,
+          use: "html-loader",
+        },
+        {
+          test: /\.(png|jpg|jpeg|ttf|woff|woff2|gif|ico)$/,
+          type: "asset/resource",
+          generator: {
+            filename: "assets/[name][ext][query]",
+          },
+        },
+      ],
+    },
+    plugins: [
+      new Dotenv(), // .env file support
+      new CopyWebpackPlugin({
+        patterns: [
+          {
+            from: "src/web.config",
+            to: "src/web.config",
+          },
+        ],
+      }),
+      new CustomFunctionsMetadataPlugin({
+        output: "functions.json",
+        input: "./src/functions/functions.ts",
+      }),
+      new HtmlWebpackPlugin({
+        filename: "taskpane.html",
+        template: "./src/taskpane/taskpane.html",
+        chunks: ["polyfill", "functions", "taskpane", "react"],
+      }),
+      new CopyWebpackPlugin({
+        patterns: [
+          {
+            from: "assets/*",
+            to: "assets/[name][ext][query]",
+          },
+          {
+            from: "manifest*.xml",
+            to: "[name]" + "[ext]",
+            transform(content) {
+              if (dev) {
+                return content;
+              } else {
+                return content.toString().replace(new RegExp(urlDev, "g"), urlProd);
+              }
+            },
+          },
+        ],
+      }),
+
+      new webpack.ProvidePlugin({
+        Promise: ["es6-promise", "Promise"],
+      }),
+    ],
+    devServer: {
+      hot: true,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+      },
+      server: {
+        type: "https",
+        options: env.WEBPACK_BUILD || options.https !== undefined ? options.https : await getHttpsOptions(),
+      },
+      port: process.env.npm_package_config_dev_server_port || 3000,
+    },
+  };
+
+  return config;
 };
