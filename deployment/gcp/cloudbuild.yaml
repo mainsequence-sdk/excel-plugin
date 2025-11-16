@@ -1,0 +1,35 @@
+steps:
+  # 1. Install dependencies in excel-addin/
+  - id: "npm ci"
+    name: "gcr.io/cloud-builders/npm"
+    dir: "excel-addin"          # <--- relative to repo root
+    args: ["ci"]
+
+  # 2. Build the add-in (Webpack -> dist/)
+  - id: "build add-in"
+    name: "gcr.io/cloud-builders/npm"
+    dir: "excel-addin"
+    args: ["run", "build"]
+    env:
+      - "APP_ENV=${_ENVIRONMENT}"  # optional; only if you use it in the build
+
+  # 3. Sync dist/ to env-specific GCS bucket
+  - id: "upload to GCS"
+    name: "gcr.io/cloud-builders/gsutil"
+    dir: "excel-addin"
+    args:
+      [
+        "-m",
+        "rsync",
+        "-r",
+        "-c",
+        "-d",
+        "dist",
+        "gs://mainsequence-excel-addin-${_ENVIRONMENT}"
+      ]
+
+substitutions:
+  _ENVIRONMENT: $_TF_ENVIRONMENT
+
+options:
+  logging: CLOUD_LOGGING_ONLY

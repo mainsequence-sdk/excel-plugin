@@ -1,2 +1,29 @@
-.env
-venv
+# Don't send VCS metadata
+.git
+.gitignore
+**/.git
+**/.gitignore
+
+# Python cruft (in case docs or other tools use it)
+**/__pycache__/
+**/*.pyc
+**/.venv/
+**/venv/
+
+# Node modules and build artifacts
+**/node_modules/
+**/dist/
+npm-debug.log
+yarn.lock
+pnpm-lock.yaml
+
+# Editor / OS noise
+**/.idea/
+**/.vscode/
+.DS_Store
+
+# Terraform / infra state (if present)
+**/.terraform/
+**/.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
