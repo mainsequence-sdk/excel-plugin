@@ -6,7 +6,7 @@ with a simple login and one custom function.
 ## What it does
 
 -   Lets you sign in through a task pane.
--   Provides a function `=MainSequence.GETITEM()` for fetching live
+-   Provides a function `=MainSequence.GET_DATA()` for fetching live
     data.
 -   Runs inside Excel without switching apps.
 
@@ -28,7 +28,7 @@ React, Fluent UI, Office.js, Webpack, Vercel.
 1.  Open the task pane and sign in.
 2.  Use the function in any cell:
 
-    =MainSequence.GETITEM("2022-01-01", "2022-01-31", , TRUE, TRUE, 500, 0)
+    =MainSequence.GET_DATA("2022-01-01", "2022-01-31", , TRUE, TRUE, 500, 0)
 
 ## Deployment
 

@@ -121,7 +121,7 @@ export const FetchData = async (
  * @param {number} [offset=0] The starting offset for pagination.
  * @returns {string[][]} A 2D array of data including headers and potentially a "More data available" message.
  */
-async function GETITEM(start_date, end_date, unique_identifier_list, great_or_equal, less_or_equal, pageSize = 1000, offset = 0) {
+async function GET_DATA(start_date, end_date, unique_identifier_list, great_or_equal, less_or_equal, pageSize = 1000, offset = 0) {
   try {
     // Flatten unique_identifier_list if it's a 2D array from Excel input
     const flat_unique_identifier_list = unique_identifier_list ? unique_identifier_list.flat().filter(item => item !== "") : [];
@@ -257,7 +257,7 @@ const dataRows = results.map((item) => [
     }
     finalOutput.push(...dataRows);
     // If there's more data, add a special row to indicate this.
-    // The user would then call GETITEM again with the new offset.
+    // The user would then call GET_DATA again with the new offset.
     // if (nextOffset !== null && dataResponse.returned_count === pageSize) {
     //     finalOutput.push(["", "", "", "", "", "", "", "", "", `More data available. Next offset: ${nextOffset}. Current page size: ${pageSize}`]);
     // }
@@ -272,13 +272,13 @@ const dataRows = results.map((item) => [
     console.log("📊 Returning cleaned data:", finalOutput.length, "rows (including headers/message)");
     return finalOutput;
   } catch (error) {
-    console.error(" Error in GETITEM:", error);
+    console.error(" Error in GET_DATA:", error);
     // Return a single cell error message to Excel
     return [["Error", error.message || "Unknown error"]];
   }
 }
 
-CustomFunctions.associate("GETITEM", GETITEM);
+CustomFunctions.associate("GET_DATA", GET_DATA);
 
 
 
