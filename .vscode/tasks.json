@@ -63,6 +63,24 @@
       "problemMatcher": []
     },
     {
+      "label": "Debug: Excel Desktop (Local)",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "run",
+        "start:local",
+        "--",
+        "desktop",
+        "--app",
+        "excel"
+      ],
+      "presentation": {
+        "clear": true,
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Debug: Outlook Desktop",
       "type": "shell",
       "command": "npm",
@@ -168,6 +186,17 @@
       "label": "Stop Debug (Dev)",
       "type": "npm",
       "script": "stop:dev",
+      "presentation": {
+        "clear": true,
+        "panel": "shared",
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Stop Debug (Local)",
+      "type": "npm",
+      "script": "stop:local",
       "presentation": {
         "clear": true,
         "panel": "shared",

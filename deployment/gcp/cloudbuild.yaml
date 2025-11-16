@@ -11,13 +11,13 @@ steps:
     dir: "excel-addin"
     args: ["run", "build"]
     env:
-      # optional; only if you actually read process.env.APP_ENV in your build
+      # optional; only if you actually use process.env.APP_ENV
       - "APP_ENV=${_ENVIRONMENT}"
 
-  # 3. Upload the built web assets (dist/) to env-specific bucket
+  # 3. Upload the built web assets (everything under dist/) to env-specific bucket
   - id: "upload web assets"
     name: "gcr.io/cloud-builders/gsutil"
-    dir: "excel-addin"
+    dir: "excel-addin/dist"            # <--- now we are INSIDE dist
     args:
       [
         "-m",
@@ -25,7 +25,7 @@ steps:
         "-r",
         "-c",
         "-d",
-        "dist",
+        ".",                            # <--- sync from current dir
         "gs://mainsequence-excel-addin-${_ENVIRONMENT}/web"
       ]
 

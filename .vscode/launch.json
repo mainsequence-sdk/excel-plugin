@@ -23,6 +23,16 @@
       "postDebugTask": "Stop Debug (Dev)"
     },
     {
+      "name": "Excel Desktop (Edge Chromium - Local)",
+      "type": "msedge",
+      "request": "attach",
+      "port": 9229,
+      "timeout": 600000,
+      "webRoot": "${workspaceRoot}",
+      "preLaunchTask": "Debug: Excel Desktop (Local)",
+      "postDebugTask": "Stop Debug (Local)"
+    },
+    {
       "name": "Excel Desktop (Edge Legacy)",
       "type": "office-addin",
       "request": "attach",

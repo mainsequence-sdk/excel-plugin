@@ -12,8 +12,8 @@
     "dev_server_port": 3000
   },
   "scripts": {
-    "build": "webpack --mode production",
-    "build:dev": "webpack --mode development",
+    "build": "node ./run-with-localstorage.js webpack --mode production",
+    "build:dev": "node ./run-with-localstorage.js webpack --mode development",
     "dev-server": "node ./run-with-localstorage.js webpack serve --mode development",
     "lint": "office-addin-lint check",
     "lint:fix": "office-addin-lint fix",
@@ -22,8 +22,10 @@
     "signout": "office-addin-dev-settings m365-account logout",
     "start": "node ./run-with-localstorage.js office-addin-debugging start manifest.xml",
     "start:dev": "node ./run-with-localstorage.js office-addin-debugging start manifest.dev.xml",
+    "start:local": "node ./run-with-localstorage.js office-addin-debugging start manifest.local.xml",
     "stop": "office-addin-debugging stop manifest.xml",
     "stop:dev": "office-addin-debugging stop manifest.dev.xml",
+    "stop:local": "office-addin-debugging stop manifest.local.xml",
     "validate": "office-addin-manifest validate manifest.xml",
     "watch": "webpack --mode development --watch"
   },
