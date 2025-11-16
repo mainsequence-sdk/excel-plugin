@@ -31,7 +31,7 @@ steps:
 
   # 4. Pick the right manifest based on environment and upload it
   - id: "upload manifest"
-    name: "gcr.io/cloud-builders/gsutil"
+    name: "gcr.io/cloud-builders/gcloud"
     dir: "excel-addin"
     entrypoint: bash
     args:
@@ -43,7 +43,8 @@ steps:
         else
           MANIFEST=manifest.xml
         fi
-        gsutil cp "${MANIFEST}" "gs://mainsequence-excel-addin-${_ENVIRONMENT}/manifest.xml"
+        # NOTE: $$MANIFEST so Cloud Build doesn't treat ${MANIFEST} as a substitution
+        gsutil cp "$$MANIFEST" "gs://mainsequence-excel-addin-${_ENVIRONMENT}/manifest.xml"
 
 substitutions:
   _ENVIRONMENT: $_TF_ENVIRONMENT
