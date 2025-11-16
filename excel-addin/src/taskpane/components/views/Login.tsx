@@ -18,37 +18,19 @@ import {
   ToastBody,
   ToastIntent,
   Link,
+  FluentProvider,
 } from '@fluentui/react-components';
 
-import { FetchData } from '../services/FetchData';
-import refresh from '../services/refresh';
 import auth from '../services/auth';
 import { useNavigate } from 'react-router-dom';
+import { mainSequenceTheme } from '../../theme';
 
 const MainSequenceLogo = () => (
-  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="https://dev-tsorm.ngrok.app/static/media/logos/emblem.png">
-    <path
-      d="M12 2L2 7L12 12L22 7L12 2Z"
-      stroke={tokens.colorBrandForeground1}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M2 17L12 22L22 17"
-      stroke={tokens.colorBrandForeground1}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M2 12L12 17L22 12"
-      stroke={tokens.colorBrandForeground1}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
+  <img
+    src="https://main-sequence.app/static/media/logos/MS_logo_long_white.png"
+    alt="MainSequence logo"
+    style={{ maxWidth: "220px", height: "auto" }}
+  />
 );
 
 const useStyles = makeStyles({
@@ -184,6 +166,7 @@ navigate('/Home')
   };
 
   return (
+    <FluentProvider theme={mainSequenceTheme}>
     <div className={styles.container}>
       {/* Use the generated ID for the toaster instance */}
       <Toaster toasterId={toasterId} />
@@ -193,8 +176,8 @@ navigate('/Home')
         </div>
 
         <CardHeader
-          header={<Title1 className={styles.title}>Welcome Back</Title1>}
-          description={<Body1 className={styles.subtitle}>Sign in with MainSequence to access your dashboard.</Body1>}
+          header={<Title1 className={styles.title}>Sign In</Title1>}
+          description={<Body1 className={styles.subtitle}>Sign in with your Main Sequence credentials</Body1>}
         />
 
         <form onSubmit={handleLogin} className={styles.form}>
@@ -301,6 +284,7 @@ navigate('/Home')
         </div>
       </Card>
     </div>
+    </FluentProvider>
   );
 };
 

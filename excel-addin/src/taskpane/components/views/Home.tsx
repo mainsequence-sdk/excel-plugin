@@ -218,7 +218,6 @@
 import React, { useState, useEffect } from "react";
 import {
   FluentProvider,
-  teamsLightTheme,
   Button,
   Text,
   Title3,
@@ -242,37 +241,14 @@ import {
 } from "@fluentui/react-components";
 import { SignOut20Regular } from "@fluentui/react-icons";
 import { useNavigate } from "react-router-dom";
+import { mainSequenceTheme } from "../../theme";
 
 const MainSequenceLogo = () => (
-  <svg
-    width="64"
-    height="64"
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M12 2L2 7L12 12L22 7L12 2Z"
-      stroke={tokens.colorBrandForeground1}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M2 17L12 22L22 17"
-      stroke={tokens.colorBrandForeground1}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M2 12L12 17L22 12"
-      stroke={tokens.colorBrandForeground1}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
+  <img
+    src="https://main-sequence.app/static/media/logos/MS_logo_long_white.png"
+    alt="MainSequence logo"
+    style={{ maxWidth: "200px", height: "auto" }}
+  />
 );
 
 const useStyles = makeStyles({
@@ -338,6 +314,10 @@ const useStyles = makeStyles({
     alignItems: "center",
     height: "100vh",
   },
+  avatar: {
+    backgroundColor: "#468DFF",
+    color: tokens.colorNeutralForegroundOnBrand,
+  },
 });
 
 export default function MainSequenceDashboard() {
@@ -366,7 +346,7 @@ export default function MainSequenceDashboard() {
 
   if (loading) {
     return (
-      <FluentProvider theme={teamsLightTheme}>
+      <FluentProvider theme={mainSequenceTheme}>
         <div className={styles.spinnerContainer}>
           <Spinner label="Checking sign-in status..." />
         </div>
@@ -375,20 +355,19 @@ export default function MainSequenceDashboard() {
   }
 
   return (
-    <FluentProvider theme={teamsLightTheme}>
+    <FluentProvider theme={mainSequenceTheme}>
       <div className={styles.container}>
         {/* Navbar */}
         <div className={styles.navbar}>
           <div className={styles.brand}>
             <MainSequenceLogo />
-            <Text weight="semibold">MainSequence</Text>
           </div>
 
           <Dialog>
             <DialogTrigger disableButtonEnhancement>
               <Avatar
                 name={user.name || "User"}
-                color="brand"
+                className={styles.avatar}
                 aria-label="Profile"
                 style={{ cursor: "pointer" }}
               />
@@ -433,7 +412,7 @@ export default function MainSequenceDashboard() {
             </div>
             {user.signedIn ? (
               <>
-                <Title3 style={{textAlign:'center'}}>Welcome to MainSequence</Title3>
+                <Title3 style={{textAlign:'center'}}>Welcome</Title3>
                 <Subtitle1 style={{textAlign:'center'}}>You’ve successfully signed in.</Subtitle1>
                 <Text style={{textAlign:'center'}}>
                   You can now access all available tools and data inside Excel.
