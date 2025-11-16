@@ -11,7 +11,7 @@ steps:
     dir: "excel-addin"
     args: ["run", "build"]
     env:
-      # optional; only if you actually use process.env.APP_ENV
+      # optional; only if you actually read process.env.APP_ENV in your build
       - "APP_ENV=${_ENVIRONMENT}"
 
   # 3. Upload the built web assets (dist/) to env-specific bucket
@@ -39,12 +39,10 @@ steps:
       - |
         set -e
         if [ "${_ENVIRONMENT}" = "development" ]; then
-          MANIFEST=manifest.dev.xml
+          gsutil cp manifest.dev.xml "gs://mainsequence-excel-addin-${_ENVIRONMENT}/manifest.xml"
         else
-          MANIFEST=manifest.xml
+          gsutil cp manifest.xml "gs://mainsequence-excel-addin-${_ENVIRONMENT}/manifest.xml"
         fi
-        # NOTE: $$MANIFEST so Cloud Build doesn't treat ${MANIFEST} as a substitution
-        gsutil cp "$$MANIFEST" "gs://mainsequence-excel-addin-${_ENVIRONMENT}/manifest.xml"
 
 substitutions:
   _ENVIRONMENT: $_TF_ENVIRONMENT
