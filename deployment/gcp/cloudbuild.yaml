@@ -7,7 +7,7 @@ steps:
   # 2. Build the add-in (Webpack -> dist/)
   - id: "build add-in"
     name: "gcr.io/cloud-builders/npm"
-    args: ["run, "build"]
+    args: ["run", "build"]
     env:
       # optional; only if you actually use process.env.APP_ENV
       - "APP_ENV=${_ENVIRONMENT}"
