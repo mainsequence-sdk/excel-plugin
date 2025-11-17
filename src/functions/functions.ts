@@ -278,7 +278,7 @@ const dataRows = results.map((item) => [
   }
 }
 
-CustomFunctions.associate("GET_NODE_DATA", GET_DATA);
+CustomFunctions.associate("GET_MS_NODE_DATA", GET_DATA);
 
 
 
