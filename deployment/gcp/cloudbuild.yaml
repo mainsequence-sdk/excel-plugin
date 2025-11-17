@@ -21,7 +21,7 @@ steps:
         "-m",
         "rsync",
         "-r",
-        "-c",
+        # "-c", # uncomment to enable checksum comparison
         "-d",
         ".",
         "gs://mainsequence-excel-addin-${_ENVIRONMENT}/web"
