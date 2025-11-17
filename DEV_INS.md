@@ -73,4 +73,10 @@ def decompress_string_to_curve(b64_string: str) -> dict[Any, Any]:
  '6271': 22.294158071760332,
  '10184': 52.61310493723933}
 ```
-so the function should tranasofmr each key,value into 2 cells with cell headers days_to_maturity, interest_rate
+so the function should transform each key,value into 2 cells with cell headers days_to_maturity, interest_rate
+
+## Task 3
+
+build GET_ASSET()
+
+## Inflate Asset
