@@ -1,5 +1,5 @@
 steps:
-  # 1. Install dependencies in repo root
+  # 1. Install dependencies at repo root
   - id: "npm ci"
     name: "gcr.io/cloud-builders/npm"
     args: ["ci"]
@@ -7,15 +7,15 @@ steps:
   # 2. Build the add-in (Webpack -> dist/)
   - id: "build add-in"
     name: "gcr.io/cloud-builders/npm"
-    args: ["run", "build"]
+    args: ["run, "build"]
     env:
-      # optional; only if you use process.env.APP_ENV in your build
+      # optional; only if you actually use process.env.APP_ENV
       - "APP_ENV=${_ENVIRONMENT}"
 
-  # 3. Upload the built web assets (everything under dist/) to env-specific bucket
+  # 3. Upload built web assets (everything under dist/) to env-specific bucket
   - id: "upload web assets"
     name: "gcr.io/cloud-builders/gsutil"
-    dir: "dist"   # <--- dist is at repo-root/dist
+    dir: "dist"
     args:
       [
         "-m",
@@ -30,20 +30,20 @@ steps:
   # 4. Pick the right manifest based on environment and upload it
   - id: "upload manifest"
     name: "gcr.io/cloud-builders/gcloud"
-    dir: "."      # <--- manifests live at repo root
+    dir: "."
     entrypoint: bash
     args:
       - "-c"
       - |
         set -e
+        echo "ENVIRONMENT=${_ENVIRONMENT}"
         if [ "${_ENVIRONMENT}" = "development" ]; then
-          SRC="manifest.dev.xml"
+          echo "Using manifest.dev.xml"
+          gsutil cp manifest.dev.xml "gs://mainsequence-excel-addin-${_ENVIRONMENT}/manifest.xml"
         else
-          SRC="manifest.xml"
+          echo "Using manifest.xml"
+          gsutil cp manifest.xml "gs://mainsequence-excel-addin-${_ENVIRONMENT}/manifest.xml"
         fi
-        echo "Using manifest: $SRC (pwd: $(pwd))"
-        ls -l "$SRC"
-        gsutil cp "$SRC" "gs://mainsequence-excel-addin-${_ENVIRONMENT}/manifest.xml"
 
 substitutions:
   _ENVIRONMENT: $_TF_ENVIRONMENT
