@@ -34,3 +34,42 @@ React, Fluent UI, Office.js, Webpack, Vercel.
 
 Push to GitHub to trigger a Vercel build.\
 After deployment, update the production URL inside `manifest.xml`.
+
+### GCP Bucket config
+Here is the summary of the commands to run in your Google Cloud Shell (or local terminal) to permanently fix CORS and file type issues for your Excel Add-in bucket.
+
+Replace YOUR_BUCKET_NAME with your actual bucket (e.g., mainsequence-excel-addin-development).
+
+#### Step 1: Create the CORS configuration file
+Run this single command to create a file named cors.json with permissive settings (allows all origins) in your current folder.
+
+```Bash
+
+echo '[{"origin": ["*"],"method": ["GET", "HEAD", "OPTIONS"],"responseHeader": ["*"],"maxAgeSeconds": 3600}]' > cors.json
+```
+#### Step 2: Apply the configuration to the bucket
+This pushes the rule to Google Cloud.
+
+```Bash
+
+gcloud storage buckets update gs://YOUR_BUCKET_NAME --cors-file=cors.json
+```
+#### Step 3: Fix Content Types (The "Hidden" Fix)
+Even with CORS fixed, Excel will reject your files if Google thinks they are "text/plain". Run these to force them to be executable code.
+
+```Bash
+
+# Fix the JSON manifest/metadata
+gsutil setmeta -h "Content-Type:application/json" gs://YOUR_BUCKET_NAME/web/functions.json
+
+# Fix the JavaScript logic
+gsutil setmeta -h "Content-Type:application/javascript" gs://YOUR_BUCKET_NAME/web/functions.js
+```
+Step 4: Verify it worked
+Run this "fake request" to see if the bucket responds with the correct permission headers.
+
+```Bash
+
+curl -I -H "Origin: https://excel.officeapps.live.com" https://storage.googleapis.com/YOUR_BUCKET_NAME/web/functions.json
+```
+Success Indicator: You should see this line in the output: access-control-allow-origin: *
