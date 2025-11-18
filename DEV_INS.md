@@ -1,5 +1,5 @@
-# TASK 2
-
+# TASK 2 
+## BUDGET 100 USD
 ## Modify the GET_DATA function so it accepts an extra argument called node_identifier
 This should be the final version of the GET_DATA function
 
@@ -75,7 +75,7 @@ def decompress_string_to_curve(b64_string: str) -> dict[Any, Any]:
 ```
 so the function should transform each key,value into 2 cells with cell headers days_to_maturity, interest_rate
 
-## Task 3
+## Task 3 BUDGET 50 USD
 
 build GET_ASSET()
 
