@@ -1,6 +1,6 @@
 # TASK 2 
 ## BUDGET 100 USD
-## Modify the GET_DATA function so it accepts an extra argument called node_identifier
+** NOTE: Modify the GET_DATA function so it accepts an extra argument called node_identifier
 This should be the final version of the GET_DATA function
 
 ## Modify the code so the endpoint for the production manifest is https://main-sequence.app as the root
