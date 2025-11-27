@@ -1,82 +1,53 @@
-# TASK 2 
-## BUDGET 100 USD
-** NOTE: Modify the GET_DATA function so it accepts an extra argument called node_identifier
-This should be the final version of the GET_DATA function
+# Developer Onboarding
 
-## Modify the code so the endpoint for the production manifest is https://main-sequence.app as the root
+Welcome to the MainSequence Excel Add-in. This guide is aimed at getting a new contributor productive quickly and keeping our workflow consistent.
 
-## Implement curve inflation
+## Quick Setup
+- Prereqs: Node 18+, npm, Excel desktop with sideloading enabled, VS Code.
+- Install deps: `npm install`.
+- Local dev: `npm run start:local` (uses `manifest.local.xml` against https://localhost:3000 via webpack dev server).
+- Dev/staging sideload: `npm run start:dev` (uses `manifest.dev.xml` built from the dev branch pipeline).
+- Production check: `npm run start` (uses `manifest.xml`, assets published by CI/CD).
 
-1. in the sheet called QuantLibBond use the GET_DATA function to  get that data only for 1 day same start same end
-2. you will receive something data like this
-```shell
+## Branching & Workflow
+- Always branch from `dev` and create a dedicated feature branch for every change.
+- Keep commits small and descriptive; open PRs back into `dev`.
+- Before opening a PR, run the relevant npm scripts and add/update tests where possible.
 
-curves .iloc[-1:].to_dict()
-Out[14]: 
-{'time_index': {2727: '2025-12-09T00:00:00Z'},
- 'unique_identifier': {2727: 'BANXICO_M_BONOS_OTR'},
- 'curve': {2727: 'H4sIAOW5B2kC/zVQSY4gMQj7S86lEpjF0F9rzd/HKalziWIcL/wePz98mft3ZjyeA144Z6LKkhlkP2ftojXcROY4Rdjn6L54A90eDUuLfE7g0x6brDSgosYgPPHROYngRNO3JFOQzLxhVdPJJY2Qay8uXheSN6gsxecQX5zFoLxnlaiMN+XHTy8Wm6YCdvXd/DOgqFYhfqNDH9wjzs++prPbGJfcVfIOuwP6yNIDVO/OO8i8gyZLErFhrc3dVZDfj8Fl0lzrCA0QV8rtzRvGoRrrdGnJTu7urwlpKDHFpez10AaBF6sySuRsi8BXZRSg8GrhbrlBKET8+w95sOsX0AEAAA=='}}
+## VS Code Expectations
+- We cross-develop in VS Code. For every new test scenario or feature, add or update a launch configuration in `.vscode/launch.json` so others can debug the same entrypoint.
+- Keep launch configurations named after the feature or ticket for easy discovery.
 
+## Manifests & Builds
+- `manifest.local.xml`: Local sideload; points to https://localhost:3000 assets from `npm run start:local`. Good for rapid iteration.
+- `manifest.dev.xml`: Dev/staging sideload; uses artifacts produced from the `dev` branch CI/CD. Use when validating with shared test data.
+- `manifest.xml`: Production sideload; served from the production bucket/https://main-sequence.app via CI/CD. Only updated after merges to main/production.
+- When changing URLs or capabilities, keep the three manifests in sync and document the intended environment in your PR.
 
-```
-3. implement a function that performs the following on a cell INFLATE_ZERO_CURVE
-```python
-import base64
-import gzip
-import json
-from typing import Any, TypedDict
-def decompress_string_to_curve(b64_string: str) -> dict[Any, Any]:
-    """
-    Decodes, decompresses, and deserializes a string back into a curve dictionary.
+## Repository Layout
+- `src/functions/functions.ts`: Office custom functions (e.g., `GET_DATA`) plus auth/token refresh helpers.
+- `src/taskpane/`: React task pane app (sign-in flow, routing, UI components).
+- `assets/`: Icons and static assets referenced by manifests.
+- `deployment/`: Deployment scripts/configs for CI/CD buckets.
+- `webpack.config.js`, `babel.config.json`, `tsconfig.json`: Build and tooling configuration.
 
-    Pipeline: Base64 (text) -> Gzip (binary) -> JSON -> Dict
+## Feature Notes
+- Custom functions currently centered on `GET_DATA` for pulling backend data into Excel with pagination and token refresh.
+- Task pane handles user auth and wiring to the custom functions runtime.
+- When adding functions, keep input flattening and boolean normalization consistent with the existing patterns.
 
-    Args:
-        b64_string: The Base64-encoded string from the database or API.
+## Development Guidelines
+- Follow TypeScript/ESLint defaults in the repo; prefer small, testable units.
+- Update manifests as needed when endpoints change and call out any environment-specific behavior in PRs.
+- Document new endpoints, payloads, and required Excel sheet setup in README sections you touch.
 
-    Returns:
-        The reconstructed Python dictionary.
-    """
-    # 1. Encode the ASCII string back into Base64 bytes
-    base64_bytes = b64_string.encode("ascii")
+## Excel Targets
+- All features must work in both local Excel (desktop) and Excel on the web. Validate both unless explicitly exempted.
+- Exception: Excel oil/QuantLib-style integrations may be desktop-only; note this in PRs when applicable.
+- Maintain the online Excel example workbook demonstrating each function. Current shared link: https://mainsequence2185-my.sharepoint.com/:x:/g/personal/jose_mainsequence2185_onmicrosoft_com/IQCKHtHX4SWITbq5n1IoU4zUAX8bGAfeIqRPbnFjikpiAuY?e=WkW0lW. Keep the sheet examples up to date as new functions land.
 
-    # 2. Decode the Base64 to get the compressed Gzip bytes
-    compressed_bytes = base64.b64decode(base64_bytes)
-
-    # 3. Decompress the Gzip bytes to get the original JSON bytes
-    json_bytes = gzip.decompress(compressed_bytes)
-
-    # 4. Decode the JSON bytes to a string and parse back into a dictionary
-    return json.loads(json_bytes.decode("utf-8"))
-```
-
-4.This will give you a json with days_to_maturity and curve_value
-```python
-
-{'1': 7.749999999998813,
- '27': 7.48835504743776,
- '90': 7.587942448174889,
- '174': 7.62266136204034,
- '321': 7.808454022535802,
- '342': 7.678423783671959,
- '524': 8.305586479770726,
- '692': 8.547975872777657,
- '720': 7.928251689448507,
- '902': 8.415757670504059,
- '1014': 8.789405394462637,
- '1133': 9.000099628116807,
- '1630': 9.718765132742464,
- '1644': 9.677563739306988,
- '1777': 9.782246470162038,
- '2330': 10.440591272791714,
- '2813': 11.079162767733077,
- '6271': 22.294158071760332,
- '10184': 52.61310493723933}
-```
-so the function should transform each key,value into 2 cells with cell headers days_to_maturity, interest_rate
-
-## Task 3 BUDGET 50 USD
-
-build GET_ASSET()
-
-## Inflate Asset
+## Upcoming Work Checklist
+- [ ] Integrate Main Sequence Add-in with QuantLib (targeting functionality similar to https://bnikolic.co.uk/ql/qloil.html).
+- [ ] Fixes for deployment (https://main-sequence.atlassian.net/browse/MSEAI-3?atlOrigin=eyJpIjoiNGE4ODExZjI5YjkzNGM2NGIyYWVhMjAxMDQwMzM1NmQiLCJwIjoiaiJ9).
+- [ ] Implement Curve Inflation Function (https://main-sequence.atlassian.net/browse/MSEAI-3?atlOrigin=eyJpIjoiNGE4ODExZjI5YjkzNGM2NGIyYWVhMjAxMDQwMzM1NmQiLCJwIjoiaiJ9).
+- [ ] Build `GET_ASSET` function (https://main-sequence.atlassian.net/browse/MSEAI-3?atlOrigin=eyJpIjoiNGE4ODExZjI5YjkzNGM2NGIyYWVhMjAxMDQwMzM1NmQiLCJwIjoiaiJ9).
