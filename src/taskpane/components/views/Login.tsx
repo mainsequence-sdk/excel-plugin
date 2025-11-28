@@ -100,7 +100,7 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-const navigate=useNavigate()
+  const navigate = useNavigate()
   // --- Best Practice: Reusable Notification Function ---
   const notify = ({ title, body, intent }: { title: string; body: string; intent: ToastIntent }) => {
     dispatchToast(
@@ -129,20 +129,20 @@ const navigate=useNavigate()
       await new Promise(resolve => setTimeout(resolve, 1500));
       await auth(email, password, (result, error) => {
         if (result) {
-          console.log('result',result);
-          
+          console.log('result', result);
+
           localStorage.setItem('token', result.access);
           localStorage.setItem('refresh', result.refresh);
           OfficeRuntime.storage.setItem('token', result.access);
 
-navigate('/Home')
+          navigate('/Home')
           setLoading(false);
           notify({
             title: 'Login Successful',
             body: 'Welcome back! Redirecting you now...',
             intent: 'success',
           });
-          localStorage.setItem('email',email)
+          localStorage.setItem('email', email)
         }
         if (error) {
           setLoading(false);
@@ -167,59 +167,59 @@ navigate('/Home')
 
   return (
     <FluentProvider theme={mainSequenceTheme}>
-    <div className={styles.container}>
-      {/* Use the generated ID for the toaster instance */}
-      <Toaster toasterId={toasterId} />
-      <Card className={styles.card}>
-        <div className={styles.logoContainer}>
-          <MainSequenceLogo />
-        </div>
-
-        <CardHeader
-          header={<Title1 className={styles.title}>Sign In</Title1>}
-          description={<Body1 className={styles.subtitle}>Sign in with your Main Sequence credentials</Body1>}
-        />
-
-        <form onSubmit={handleLogin} className={styles.form}>
-          <Input
-            required
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            size="large"
-            onChange={(e) => setEmail(e.target.value)}
-            // --- UX Improvement: Disable input during loading ---
-            disabled={loading}
-          />
-          <div>
-            <Input
-              required
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              size="large"
-              onChange={(e) => setPassword(e.target.value)}
-              style={{ width: '100%' }}
-              disabled={loading}
-            />
-            <div className={styles.forgotPassword}>
-              <Link href="#" disabled={loading}>
-                Forgot Password?
-              </Link>
-            </div>
+      <div className={styles.container}>
+        {/* Use the generated ID for the toaster instance */}
+        <Toaster toasterId={toasterId} />
+        <Card className={styles.card}>
+          <div className={styles.logoContainer}>
+            <MainSequenceLogo />
           </div>
 
-          <Button
-            appearance="primary"
-            className={styles.button}
-            type="submit"
-            disabled={loading}
-            size="large"
-            icon={loading ? <Spinner size="tiny" /> : null}
-          >
-            {loading ? 'Signing In...' : 'Sign In'}
-          </Button>
-          {/* <Button
+          <CardHeader
+            header={<Title1 className={styles.title}>Sign In</Title1>}
+            description={<Body1 className={styles.subtitle}>Sign in with your Main Sequence credentials</Body1>}
+          />
+
+          <form onSubmit={handleLogin} className={styles.form}>
+            <Input
+              required
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              size="large"
+              onChange={(e) => setEmail(e.target.value)}
+              // --- UX Improvement: Disable input during loading ---
+              disabled={loading}
+            />
+            <div>
+              <Input
+                required
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                size="large"
+                onChange={(e) => setPassword(e.target.value)}
+                style={{ width: '100%' }}
+                disabled={loading}
+              />
+              <div className={styles.forgotPassword}>
+                <Link href="#" disabled={loading}>
+                  Forgot Password?
+                </Link>
+              </div>
+            </div>
+
+            <Button
+              appearance="primary"
+              className={styles.button}
+              type="submit"
+              disabled={loading}
+              size="large"
+              icon={loading ? <Spinner size="tiny" /> : null}
+            >
+              {loading ? 'Signing In...' : 'Sign In'}
+            </Button>
+            {/* <Button
             appearance="primary"
             className={styles.button}
             type="submit"
@@ -272,18 +272,18 @@ navigate('/Home')
           >
             fetch data
           </Button> */}
-        </form>
+          </form>
 
-        <div className={styles.footer}>
-          {/* <Caption1>
+          <div className={styles.footer}>
+            {/* <Caption1>
             Don't have an account?{' '}
             <Link href="#" disabled={loading}>
               Sign Up
             </Link>
           </Caption1> */}
-        </div>
-      </Card>
-    </div>
+          </div>
+        </Card>
+      </div>
     </FluentProvider>
   );
 };

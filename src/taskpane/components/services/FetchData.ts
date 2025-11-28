@@ -1,4 +1,11 @@
-import React from 'react';
+import { API } from "../utlis/Configs";
+
+let APIURI: string;
+if (process.env.NODE_ENV == "development") {
+  APIURI = API.loacluri;
+} else {
+  APIURI = API.liveuri;
+}
 
 export const FetchData = (
   start_date,
@@ -26,21 +33,21 @@ export const FetchData = (
     less_or_equal: less_or_equal ?? true,
     unique_identifier_list: unique_identifier_list ?? [],
     columns: null,
-    offset: offset, 
+    offset: offset,
   });
 
-  const requestOptions :any= {
+  const requestOptions: any = {
     method: "POST",
     headers: myHeaders,
     body: raw,
     redirect: "follow",
   };
 
-  fetch("https://dev-tsorm.ngrok.app/orm/api/ts_manager/dynamic_table/714/get_data_between_dates_from_remote/", requestOptions)
+  fetch(`${APIURI}/orm/api/ts_manager/dynamic_table/714/get_data_between_dates_from_remote/`, requestOptions)
     .then((response) => response.json())
     .then((result) => {
       console.log("Data fetched:", result);
-      if(result.code=="token_not_valid"){
+      if (result.code == "token_not_valid") {
         console.log("Token expired. Refreshing token...");
       }
       // callback(result, null);
