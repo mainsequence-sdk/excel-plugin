@@ -3,62 +3,51 @@
  */
 // const toUnixSeconds = (d) => (d ? Math.floor(new Date(d).getTime() / 1000) : null);
 
-const toUnixSeconds = (value: number | string | Date | null | undefined): number | null => {
+// Works for ALL Excel serial dates up to year 9999
+// Works on Windows + Mac (1900 date system only)
+// Does NOT limit by year (no more 2065 cutoff)
+
+const toUnixSeconds = (
+  value: number | string | Date | null | undefined
+): number | null => {
+
   if (value === null || value === undefined || value === "") return null;
 
-  console.log("toUnixSeconds input:", value, typeof value);
-
-  // 1) If it's already a Date object
+  // 1) Already a JS Date object
   if (value instanceof Date) {
     const ms = value.getTime();
-    if (isNaN(ms)) return null;
-    return Math.floor(ms / 1000);
+    return isNaN(ms) ? null : Math.floor(ms / 1000);
   }
 
-  // 2) If it's a number (Excel serial date)
+  // 2) Excel Serial Number (no range limits!)
   if (typeof value === "number") {
-    // Basic sanity check for Excel serials (common range)
-    if (value < 60 || value > 60000) {
-      console.warn("Number value outside likely Excel serial range:", value);
-      return null;
-    }
-    const excelEpochMs = Date.UTC(1899, 11, 30); // 1899-12-30 UTC in ms
-    const jsDateMs = excelEpochMs + value * 86400000; // days -> ms
+    // Excel epoch: 1899-12-30
+    const excelEpochMs = Date.UTC(1899, 11, 30);
+    const jsDateMs = excelEpochMs + value * 86400000;
     return Math.floor(jsDateMs / 1000);
   }
 
-  // 3) If it's a string:
+  // 3) String
   if (typeof value === "string") {
     const trimmed = value.trim();
 
-    // 3a) Numeric-only string: treat as Excel serial if in range
+    // 3a) If string contains only digits → treat as Excel serial
     if (/^\d+$/.test(trimmed)) {
-      const n = Number(trimmed);
-      if (!isNaN(n) && n >= 60 && n <= 60000) {
-        const excelEpochMs = Date.UTC(1899, 11, 30);
-        const jsDateMs = excelEpochMs + n * 86400000;
-        return Math.floor(jsDateMs / 1000);
-      } else {
-        console.warn("Numeric string but outside Excel serial range or invalid:", trimmed);
-        return null;
-      }
+      const serial = Number(trimmed);
+      const excelEpochMs = Date.UTC(1899, 11, 30);
+      const jsDateMs = excelEpochMs + serial * 86400000;
+      return Math.floor(jsDateMs / 1000);
     }
 
-    // 3b) Otherwise try parse as ISO / normal date string
+    // 3b) Try treat as ISO / normal date
     const parsed = new Date(trimmed);
     const ms = parsed.getTime();
-    if (!isNaN(ms)) {
-      return Math.floor(ms / 1000);
-    }
-
-    // Not a valid date string
-    console.warn("String value is not a valid date:", trimmed);
-    return null;
+    return isNaN(ms) ? null : Math.floor(ms / 1000);
   }
 
-  // Not recognisable type
   return null;
 };
+
 
 
 
