@@ -28,7 +28,13 @@ React, Fluent UI, Office.js, Webpack, Vercel.
 1.  Open the task pane and sign in.
 2.  Use the function in any cell:
 
-    =MainSequence.GET_DATA("2022-01-01", "2022-01-31", , TRUE, TRUE, 500, 0)
+- start_date = cell reference
+- end_date = cell reference
+- unique_identifier_list = empty cell reference for now getting data from get_data_between_dates_from_node_identifier API
+
+- update_hash = can bee a empty cell reference or any string to complete the parameters it's an optional currently hardcoded in code as null
+
+  ` =MainSequence.GET_DATA(C8, D8, A10:A11,E8, TRUE, TRUE, 500, 0,"null")`
 
 ## Deployment
 
