@@ -5,8 +5,8 @@ Welcome to the MainSequence Excel Add-in. This guide is aimed at getting a new c
 ## Quick Setup
 - Prereqs: Node 18+, npm, Excel desktop with sideloading enabled, VS Code.
 - Install deps: `npm install`.
-- Local dev: `npm run start:local` (uses `manifest.local.xml` against https://localhost:3000 via webpack dev server).
-- Dev/staging sideload: `npm run start:dev` (uses `manifest.dev.xml` built from the dev branch pipeline).
+- Local dev: `npm run start` (loads the single `manifest.xml` against https://localhost:3000 via webpack dev server).
+- Open the sample workbook: `npm run start -- --document ${PWD}/examples/data_nodes_intro.xlsx`.
 - Production check: `npm run start` (uses `manifest.xml`, assets published by CI/CD).
 
 ## Branching & Workflow
@@ -18,11 +18,14 @@ Welcome to the MainSequence Excel Add-in. This guide is aimed at getting a new c
 - We cross-develop in VS Code. For every new test scenario or feature, add or update a launch configuration in `.vscode/launch.json` so others can debug the same entrypoint.
 - Keep launch configurations named after the feature or ticket for easy discovery.
 
-## Manifests & Builds
-- `manifest.local.xml`: Local sideload; points to https://localhost:3000 assets from `npm run start:local`. Good for rapid iteration.
-- `manifest.dev.xml`: Dev/staging sideload; uses artifacts produced from the `dev` branch CI/CD. Use when validating with shared test data.
-- `manifest.xml`: Production sideload; served from the production bucket/https://main-sequence.app via CI/CD. Only updated after merges to main/production.
-- When changing URLs or capabilities, keep the three manifests in sync and document the intended environment in your PR.
+## Manifest & Builds
+- We now maintain a **single** manifest: `manifest.xml`. All start/stop scripts and VS Code tasks use it.
+- When changing URLs or capabilities, update `manifest.xml` and call out the environment-specific expectations in your PR.
+
+## CI/CD Flow
+- Build and validate locally first: run `npm run start` and exercise functions in Excel desktop (optionally with `--document` to open the sample workbook). Fix any platform-specific issues before opening a PR.
+- Open a PR from your feature branch into `dev`. Include links to updated launch configs and the web workbook when relevant.
+- CI/CD on `dev` must pass (tests/build/lint). A green pipeline plus reviewer approval marks the feature complete and ready for promotion.
 
 ## Repository Layout
 - `src/functions/functions.ts`: Office custom functions (e.g., `GET_DATA`) plus auth/token refresh helpers.
