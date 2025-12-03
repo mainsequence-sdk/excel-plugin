@@ -99,7 +99,7 @@ export const FetchData = async (
   start_date,
   end_date,
   unique_identifier_list,
-  discount_curves,
+  node_identifier,
   great_or_equal, // This will now be a boolean
   less_or_equal,  // This will now be a boolean
   limit,          // Dynamically passed
@@ -126,7 +126,7 @@ export const FetchData = async (
       columns: null,
       limit: limit,   // Use the passed limit
       offset: offset, // Use the passed offset
-      node_identifier: discount_curves,
+      node_identifier: node_identifier,
       update_hash: null
     });
 
@@ -182,7 +182,7 @@ export const FetchData = async (
  * @param {string} start_date Start date (e.g., "2022-01-01")
  * @param {string} end_date End date (e.g., "2022-01-31")
  * @param {string[][]} unique_identifier_list List of unique identifiers (e.g., [["BBG000C1S2X2"], ["BBG000QH56C1"]])
- * @param {string} discount_curves discount_curves cell reference
+ * @param {string} node_identifier node_identifier cell reference
  * @param {boolean} great_or_equal Include data greater than or equal to start date (should be TRUE/FALSE)
  * @param {boolean} less_or_equal Include data less than or equal to end date (should be TRUE/FALSE)
  * @param {number} [pageSize=1000] The number of rows to fetch per page.
@@ -191,7 +191,7 @@ export const FetchData = async (
  * @returns {Promise<string[][]>} A 2D array of data including headers and potentially a "More data available" message.
  */
 
-async function GET_DATA(start_date, end_date, unique_identifier_list, discount_curves, great_or_equal, less_or_equal, pageSize = 1000, offset = 0, update_hash = null) {
+async function GET_DATA(start_date, end_date, unique_identifier_list, node_identifier, great_or_equal, less_or_equal, pageSize = 1000, offset = 0, update_hash = null) {
   try {
     // Flatten unique_identifier_list if it's a 2D array from Excel input
     const flat_unique_identifier_list = unique_identifier_list ? unique_identifier_list.flat().filter(item => item !== "") : [];
@@ -204,7 +204,7 @@ async function GET_DATA(start_date, end_date, unique_identifier_list, discount_c
       start_date,
       end_date,
       flat_unique_identifier_list,
-      discount_curves,
+      node_identifier,
       isGreatOrEqual,
       isLessOrEqual,
       pageSize,
