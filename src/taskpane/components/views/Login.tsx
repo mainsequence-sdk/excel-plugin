@@ -148,7 +148,7 @@ const Login = () => {
           setLoading(false);
           notify({
             title: 'Login Failed',
-            body: error,
+            body: error.message || 'An error occurred during login. Please try again.',
             intent: 'error',
           });
         }
