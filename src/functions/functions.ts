@@ -330,10 +330,9 @@ export const FetchAsset = async (unique_identifier: string) => {
  * Excel Custom Function: Get asset details by unique identifier
  * @customfunction
  * @param {string} unique_identifier The unique identifier of the asset (e.g., "90_CBPF_48")
- * @returns {Promise<string[][]>} Multi-section 2D array:
+ * @returns {Promise<string[][]>} A 2D array with keys in column 1, values in column 2
  */
-
-async function GET_ASSET(unique_identifier: string) {
+async function GET_ASSET(unique_identifier: string): Promise<string[][]> {
   try {
     if (!unique_identifier || String(unique_identifier).trim() === "") {
       return [["Error", "unique_identifier is required"]];
@@ -341,121 +340,35 @@ async function GET_ASSET(unique_identifier: string) {
 
     const response = await FetchAsset(String(unique_identifier).trim());
     const asset = response && response.results && response.results.length > 0 ? response.results[0] : null;
-    if (!asset) return [["Info", "No asset found"]];
+
+    if (!asset) {
+      return [["Error", "No asset found"]];
+    }
 
     const MAX_EXCEL_CHARS = 32760;
     const safeString = (val: any) => {
       if (val === undefined || val === null) return "";
-      if (typeof val === "string" || typeof val === "number" || typeof val === "boolean") {
-        const s = String(val);
-        return s.length > MAX_EXCEL_CHARS ? s.slice(0, MAX_EXCEL_CHARS) + " ...[truncated]" : s;
-      }
-      try {
-        const s = JSON.stringify(val);
-        return s.length > MAX_EXCEL_CHARS ? s.slice(0, MAX_EXCEL_CHARS) + " ...[truncated]" : s;
-      } catch {
-        return String(val);
-      }
+      const s = String(val);
+      return s.length > MAX_EXCEL_CHARS ? s.slice(0, MAX_EXCEL_CHARS) + " ...[truncated]" : s;
     };
 
     const rows: string[][] = [];
 
-    // 1) Top-level key/value rows (exclude snapshot & pricing for now)
-    const skip = new Set(["current_snapshot", "current_pricing_detail"]);
-    Object.keys(asset).forEach((k) => {
-      if (!skip.has(k)) {
-        rows.push([k, safeString((asset as any)[k])]);
-      }
+    // Iterate through all keys in results[0] and create key/value rows
+    Object.keys(asset).forEach((key) => {
+      const val = (asset as any)[key];
+      // If value is nested object/array, store as JSON string; otherwise as string
+      const valueStr = (typeof val === "object" && val !== null)
+        ? safeString(JSON.stringify(val))
+        : safeString(val);
+      rows.push([key, valueStr]);
     });
 
-    // 2) CURRENT_SNAPSHOT (two-column: header row then key/value rows)
-    if (asset.current_snapshot && typeof asset.current_snapshot === "object") {
-      rows.push(["", ""]);
-      rows.push(["CURRENT_SNAPSHOT", ""]);
-      const snap = asset.current_snapshot as Record<string, any>;
-      Object.keys(snap).forEach((k) => {
-        rows.push([k, safeString(snap[k])]);
-      });
-    }
-
-    // 3) CURRENT_PRICING_DETAIL
-    if (asset.current_pricing_detail && typeof asset.current_pricing_detail === "object") {
-      rows.push(["", ""]);
-      rows.push(["CURRENT_PRICING_DETAIL", ""]);
-      const pr = asset.current_pricing_detail as Record<string, any>;
-
-      // top-level pricing fields (except instrument_dump)
-      Object.keys(pr).filter(k => k !== "instrument_dump").forEach((k) => {
-        rows.push([k, safeString(pr[k])]);
-      });
-
-      // instrument_dump -> instrument
-      if (pr.instrument_dump && typeof pr.instrument_dump === "object") {
-        const dump = pr.instrument_dump as Record<string, any>;
-
-        // dump-level non-instrument keys
-        Object.keys(dump).filter(k => k !== "instrument").forEach((k) => {
-          rows.push([`INSTRUMENT_DUMP.${k}`, safeString(dump[k])]);
-        });
-
-        if (dump.instrument && typeof dump.instrument === "object") {
-          rows.push(["", ""]);
-          rows.push(["INSTRUMENT", ""]);
-          const instr = dump.instrument as Record<string, any>;
-
-          // instrument simple fields (omit calendar & schedule here)
-          Object.keys(instr).filter(k => k !== "calendar" && k !== "schedule").forEach((k) => {
-            rows.push([k, safeString(instr[k])]);
-          });
-
-          // INSTRUMENT.CALENDAR
-          if (instr.calendar && typeof instr.calendar === "object") {
-            rows.push(["", ""]);
-            rows.push(["INSTRUMENT.CALENDAR", ""]);
-            Object.keys(instr.calendar).forEach((k) => {
-              rows.push([k, safeString((instr.calendar as any)[k])]);
-            });
-          }
-
-          // SCHEDULE meta + dates (dates as a vertical list)
-          if (instr.schedule && typeof instr.schedule === "object") {
-            const schedule = instr.schedule as Record<string, any>;
-            const metaKeys = Object.keys(schedule).filter(k => k !== "dates" && k !== "calendar");
-            if (metaKeys.length > 0) {
-              rows.push(["", ""]);
-              rows.push(["SCHEDULE (META)", ""]);
-              metaKeys.forEach(k => rows.push([k, safeString(schedule[k])]));
-            }
-
-            if (schedule.calendar && typeof schedule.calendar === "object") {
-              rows.push(["", ""]);
-              rows.push(["SCHEDULE.CALENDAR", ""]);
-              Object.keys(schedule.calendar).forEach(k => rows.push([k, safeString((schedule.calendar as any)[k])]));
-            }
-
-            if (Array.isArray(schedule.dates)) {
-              rows.push(["", ""]);
-              rows.push(["SCHEDULE.DATES", `(${schedule.dates.length} total)`]);
-              // header for date list
-              rows.push(["date", ""]);
-              schedule.dates.forEach((d: any, i: number) => {
-                rows.push([`date[${i}]`, safeString(d)]);
-              });
-            }
-          }
-        }
-      }
-    }
-
-    // Final: ensure every row has exactly 2 columns (they already do), and return
-    return rows.map(r => {
-      const a = r.slice(0, 2);
-      while (a.length < 2) a.push("");
-      return a;
-    });
+    return rows;
   } catch (err) {
     console.error("Error in GET_ASSET:", err);
     return [["Error", (err as any).message || "Unknown error"]];
   }
 }
+
 CustomFunctions.associate("GET_ASSET", GET_ASSET);
