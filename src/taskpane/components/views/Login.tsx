@@ -132,7 +132,7 @@ const Login = () => {
           console.log('result', result);
 
           localStorage.setItem('token', result.access);
-          localStorage.setItem('refresh', result.refresh);
+          localStorage.setItem('refresh_token', result.refresh);
           OfficeRuntime.storage.setItem('token', result.access);
 
           navigate('/Home')
