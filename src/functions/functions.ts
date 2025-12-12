@@ -372,3 +372,55 @@ async function GET_ASSET(unique_identifier: string): Promise<string[][]> {
 }
 
 CustomFunctions.associate("GET_ASSET", GET_ASSET);
+
+
+function safeParse(json: string): any | null {
+  try {
+    return JSON.parse(json);
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Excel Custom Function
+ * GET_JSON_VALUE(jsonText, keyPath)
+ * 
+ * @customfunction
+ * @param {string} jsonText The JSON text stored in a cell
+ * @param {string} keyPath Dot-notation key path (e.g., "key2.s1")
+ * @returns {string}
+ */
+function GET_JSON_VALUE(jsonText: string, keyPath: string): string {
+  if (!jsonText) return "Invalid JSON";
+
+  const obj = safeParse(jsonText);
+  if (!obj) return "Invalid JSON";
+
+  // Direct key like "key1"
+  // Nested key like "key2.s1"
+  const keys = keyPath.split(".");
+
+  let current: any = obj;
+
+  for (const key of keys) {
+    if (current === null || current === undefined) return "Not found";
+
+    if (typeof current !== "object") return "Not found";
+
+    if (!(key in current)) return "Not found";
+
+    current = current[key];
+  }
+
+  // If result is object, return JSON string
+  if (typeof current === "object") {
+    return JSON.stringify(current);
+  }
+
+  // Otherwise return value as string
+  return String(current);
+}
+
+CustomFunctions.associate("GET_JSON_VALUE", GET_JSON_VALUE);
+
