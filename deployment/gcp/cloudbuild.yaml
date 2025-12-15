@@ -37,13 +37,8 @@ steps:
       - |
         set -e
         echo "ENVIRONMENT=${_ENVIRONMENT}"
-        if [ "${_ENVIRONMENT}" = "development" ]; then
-          echo "Using manifest.dev.xml"
-          gsutil cp manifest.dev.xml "gs://mainsequence-excel-addin-${_ENVIRONMENT}/manifest.xml"
-        else
-          echo "Using manifest.xml"
-          gsutil cp manifest.xml "gs://mainsequence-excel-addin-${_ENVIRONMENT}/manifest.xml"
-        fi
+        echo "Using manifest.xml"
+        gsutil cp manifest.xml "gs://mainsequence-excel-addin-${_ENVIRONMENT}/manifest.xml"
 
 substitutions:
   _ENVIRONMENT: $_TF_ENVIRONMENT
