@@ -1,6 +1,6 @@
-import React from 'react';
+import { getApiBaseUrl } from "../../../shared/apiConfig";
 
-export const FetchData = (
+export const FetchData = async (
   start_date,
   end_date,
   unique_identifier_list,
@@ -9,6 +9,7 @@ export const FetchData = (
   offset,
   // callback
 ) => {
+  const apiBaseUrl = await getApiBaseUrl();
   const token = localStorage.getItem('token');
   const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
@@ -26,21 +27,21 @@ export const FetchData = (
     less_or_equal: less_or_equal ?? true,
     unique_identifier_list: unique_identifier_list ?? [],
     columns: null,
-    offset: offset, 
+    offset: offset,
   });
 
-  const requestOptions :any= {
+  const requestOptions: any = {
     method: "POST",
     headers: myHeaders,
     body: raw,
     redirect: "follow",
   };
 
-  fetch("https://dev-tsorm.ngrok.app/orm/api/ts_manager/dynamic_table/714/get_data_between_dates_from_remote/", requestOptions)
+  fetch(`${apiBaseUrl}/orm/api/ts_manager/dynamic_table/714/get_data_between_dates_from_remote/`, requestOptions)
     .then((response) => response.json())
     .then((result) => {
       console.log("Data fetched:", result);
-      if(result.code=="token_not_valid"){
+      if (result.code == "token_not_valid") {
         console.log("Token expired. Refreshing token...");
       }
       // callback(result, null);

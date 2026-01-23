@@ -1,54 +1,38 @@
 steps:
-  # 1. Install dependencies in excel-addin/
+  # 1. Install dependencies at repo root
   - id: "npm ci"
     name: "gcr.io/cloud-builders/npm"
-    dir: "excel-addin"
     args: ["ci"]
 
   # 2. Build the add-in (Webpack -> dist/)
   - id: "build add-in"
     name: "gcr.io/cloud-builders/npm"
-    dir: "excel-addin"
     args: ["run", "build"]
-    env:
-      # optional; only if you actually read process.env.APP_ENV in your build
-      - "APP_ENV=${_ENVIRONMENT}"
-
-  # 3. Upload the built web assets (dist/) to env-specific bucket
+  # 3. Upload built web assets (everything under dist/) to env-specific bucket
   - id: "upload web assets"
     name: "gcr.io/cloud-builders/gsutil"
-    dir: "excel-addin"
+    dir: "dist"
     args:
       [
         "-m",
         "rsync",
         "-r",
-        "-c",
+        # "-c", # uncomment to enable checksum comparison
         "-d",
-        "dist",
-        "gs://mainsequence-excel-addin-${_ENVIRONMENT}/web"
+        ".",
+        "gs://tsorm-production/excel-addin"
       ]
 
   # 4. Pick the right manifest based on environment and upload it
   - id: "upload manifest"
     name: "gcr.io/cloud-builders/gcloud"
-    dir: "excel-addin"
+    dir: "."
     entrypoint: bash
-    env:
-      - "ENVIRONMENT=${_ENVIRONMENT}"
     args:
       - "-c"
       - |
         set -e
-        if [ "$ENVIRONMENT" = "dev" ]; then
-          MANIFEST=manifest.dev.xml
-        else
-          MANIFEST=manifest.xml
-        fi
-        gsutil cp "$MANIFEST" "gs://mainsequence-excel-addin-${ENVIRONMENT}/manifest.xml"
-
-substitutions:
-  _ENVIRONMENT: $_TF_ENVIRONMENT
-
+        echo "Using manifest.xml"
+        gsutil cp dist/manifest.xml "gs://tsorm-production/excel-addin/manifest.xml"
 options:
   logging: CLOUD_LOGGING_ONLY

@@ -13,13 +13,22 @@ if (process.argv.length < 3) {
 }
 
 const FLAG = "--localstorage-file=.office-addin-localstorage";
+const majorVersion = Number(process.versions.node?.split(".")[0] ?? 0);
+const supportsLocalStorageFlag = Number.isFinite(majorVersion) && majorVersion >= 25;
 const existingOptions = process.env.NODE_OPTIONS ? process.env.NODE_OPTIONS.split(" ") : [];
 
-if (!existingOptions.includes(FLAG)) {
-  existingOptions.push(FLAG);
+let nextOptions = existingOptions.filter(Boolean);
+
+if (supportsLocalStorageFlag) {
+  if (!nextOptions.includes(FLAG)) {
+    nextOptions.push(FLAG);
+  }
+} else {
+  // Older Node versions reject --localstorage-file, so strip it out entirely.
+  nextOptions = nextOptions.filter((arg) => !arg.startsWith("--localstorage-file"));
 }
 
-process.env.NODE_OPTIONS = existingOptions.join(" ").trim();
+process.env.NODE_OPTIONS = nextOptions.join(" ").trim();
 
 const [command, ...args] = process.argv.slice(2);
 const child = spawn(command, args, {

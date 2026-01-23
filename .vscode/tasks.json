@@ -45,12 +45,12 @@
       "problemMatcher": []
     },
     {
-      "label": "Debug: Excel Desktop (Dev)",
+      "label": "Debug: Excel Desktop (Alt)",
       "type": "shell",
       "command": "npm",
       "args": [
         "run",
-        "start:dev",
+        "start",
         "--",
         "desktop",
         "--app",
@@ -61,6 +61,62 @@
         "panel": "dedicated"
       },
       "problemMatcher": []
+    },
+    {
+      "label": "Debug: Excel Desktop (Sample workbook)",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "run",
+        "start",
+        "--",
+        "desktop",
+        "--app",
+        "excel",
+        "--document",
+        "${workspaceFolder}/examples/data_nodes_intro.xlsx"
+      ],
+      "presentation": {
+        "clear": true,
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Debug: Excel Desktop (One-step)",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "run",
+        "start",
+        "--",
+        "desktop",
+        "--app",
+        "excel",
+        "--document",
+        "${workspaceFolder}/examples/data_nodes_intro.xlsx"
+      ],
+      "isBackground": true,
+      "presentation": {
+        "clear": true,
+        "panel": "dedicated"
+      },
+      "problemMatcher": {
+        "owner": "custom",
+        "fileLocation": "absolute",
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 4
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Debugging is being started",
+          "endsPattern": "Debugging started\\."
+        }
+      }
     },
     {
       "label": "Debug: Outlook Desktop",
@@ -165,9 +221,20 @@
       "problemMatcher": []
     },
     {
-      "label": "Stop Debug (Dev)",
+      "label": "Stop Debug (Alt)",
       "type": "npm",
-      "script": "stop:dev",
+      "script": "stop",
+      "presentation": {
+        "clear": true,
+        "panel": "shared",
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Stop Debug (Sample workbook)",
+      "type": "npm",
+      "script": "stop",
       "presentation": {
         "clear": true,
         "panel": "shared",
