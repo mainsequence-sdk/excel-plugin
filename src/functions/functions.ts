@@ -1,3 +1,5 @@
+import { getApiBaseUrl } from "../shared/apiConfig";
+
 /**
  * Helper function to convert date to Unix seconds
  */
@@ -51,24 +53,12 @@ const toUnixSeconds = (
 
 
 
-const API = {
-  // loacluri: "https://ts-orm-cloud-run-445866662347.europe-west1.run.app", //// for now get_data_between_dates_from_remote api not working on this
-  loacluri: "https://dev-tsorm.ngrok.app",
-  liveuri: "https://dev-tsorm.ngrok.app"
-}
-
-let APIURI: string;
-if (process.env.NODE_ENV == "development") {
-  APIURI = API.loacluri;
-} else {
-  APIURI = API.liveuri;
-}
-
 /**
  * Refresh the access token using refresh token
  */
 const refresh = async (refreshToken) => {
   if (!refreshToken) throw new Error("No refresh token available");
+  const apiBaseUrl = await getApiBaseUrl();
 
   const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
@@ -76,7 +66,7 @@ const refresh = async (refreshToken) => {
   const raw = JSON.stringify({ refresh: refreshToken });
 
   const response = await fetch(
-    `${APIURI}/auth/jwt-token/token/refresh/`,
+    `${apiBaseUrl}/auth/jwt-token/token/refresh/`,
     {
       method: "POST",
       headers: myHeaders,
@@ -109,6 +99,7 @@ export const FetchData = async (
   console.log(update_hash);
   const accessToken = await localStorage.getItem("token");
   const refreshToken = await localStorage.getItem("refresh_token");
+  const apiBaseUrl = await getApiBaseUrl();
 
   const makeRequest = async (token) => {
     const myHeaders = new Headers();
@@ -133,7 +124,7 @@ export const FetchData = async (
     console.log(" Request Payload:", raw);
 
     const response = await fetch(
-      `${APIURI}/orm/api/ts_manager/dynamic_table/get_data_between_dates_from_node_identifier/`,
+      `${apiBaseUrl}/orm/api/ts_manager/dynamic_table/get_data_between_dates_from_node_identifier/`,
       // `${APIURI}/orm/api/ts_manager/dynamic_table/714/get_data_between_dates_from_remote/`,
       {
         method: "POST",
@@ -275,6 +266,7 @@ CustomFunctions.associate("GET_DATA", GET_DATA);
 export const FetchAsset = async (unique_identifier: string) => {
   const accessToken = await OfficeRuntime.storage.getItem("token");
   const refreshToken = await OfficeRuntime.storage.getItem("refresh_token");
+  const apiBaseUrl = await getApiBaseUrl();
 
   const makeRequest = async (token: string) => {
     const myHeaders = new Headers();
@@ -282,7 +274,7 @@ export const FetchAsset = async (unique_identifier: string) => {
     myHeaders.append("Authorization", `Bearer ${token}`);
 
     const response = await fetch(
-      `${APIURI}/orm/api/assets/asset/?unique_identifier=${encodeURIComponent(unique_identifier)}`,
+      `${apiBaseUrl}/orm/api/assets/asset/?unique_identifier=${encodeURIComponent(unique_identifier)}`,
       {
         method: "GET",
         headers: myHeaders,
@@ -423,4 +415,3 @@ function GET_JSON_VALUE(jsonText: string, keyPath: string): string {
 }
 
 CustomFunctions.associate("GET_JSON_VALUE", GET_JSON_VALUE);
-

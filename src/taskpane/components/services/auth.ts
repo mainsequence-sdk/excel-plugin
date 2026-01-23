@@ -1,13 +1,7 @@
-import { API } from "../utlis/Configs";
+import { getApiBaseUrl } from "../../../shared/apiConfig";
 
-let APIURI: string;
-if (process.env.NODE_ENV == "development") {
-  APIURI = API.loacluri;
-} else {
-  APIURI = API.liveuri;
-}
-
-const auth = (email, password, callback) => {
+const auth = async (email, password, callback) => {
+  const apiBaseUrl = await getApiBaseUrl();
   const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
 
@@ -19,7 +13,7 @@ const auth = (email, password, callback) => {
     body: raw
   };
 
-  fetch(`${APIURI}/auth/jwt-token/token/`, requestOptions)
+  fetch(`${apiBaseUrl}/auth/jwt-token/token/`, requestOptions)
     .then(async (response) => {
       const data = await response.json().catch(() => null); // avoid crash on empty body
 

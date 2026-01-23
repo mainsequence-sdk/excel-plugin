@@ -1,13 +1,7 @@
-import { API } from "../utlis/Configs";
+import { getApiBaseUrl } from "../../../shared/apiConfig";
 
-let APIURI: string;
-if (process.env.NODE_ENV == "development") {
-  APIURI = API.loacluri;
-} else {
-  APIURI = API.liveuri;
-}
-
-const refresh = (token, callback) => {
+const refresh = async (token, callback) => {
+  const apiBaseUrl = await getApiBaseUrl();
   const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
 
@@ -22,7 +16,7 @@ const refresh = (token, callback) => {
     redirect: "follow"
   };
 
-  fetch(`${APIURI}/auth/jwt-token/token/refresh/`, requestOptions)
+  fetch(`${apiBaseUrl}/auth/jwt-token/token/refresh/`, requestOptions)
     .then((response) => response.text())
     .then((result) => callback(result, null))
     .catch((error) => callback(null, error));

@@ -1,13 +1,6 @@
-import { API } from "../utlis/Configs";
+import { getApiBaseUrl } from "../../../shared/apiConfig";
 
-let APIURI: string;
-if (process.env.NODE_ENV == "development") {
-  APIURI = API.loacluri;
-} else {
-  APIURI = API.liveuri;
-}
-
-export const FetchData = (
+export const FetchData = async (
   start_date,
   end_date,
   unique_identifier_list,
@@ -16,6 +9,7 @@ export const FetchData = (
   offset,
   // callback
 ) => {
+  const apiBaseUrl = await getApiBaseUrl();
   const token = localStorage.getItem('token');
   const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
@@ -43,7 +37,7 @@ export const FetchData = (
     redirect: "follow",
   };
 
-  fetch(`${APIURI}/orm/api/ts_manager/dynamic_table/714/get_data_between_dates_from_remote/`, requestOptions)
+  fetch(`${apiBaseUrl}/orm/api/ts_manager/dynamic_table/714/get_data_between_dates_from_remote/`, requestOptions)
     .then((response) => response.json())
     .then((result) => {
       console.log("Data fetched:", result);

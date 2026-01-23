@@ -8,10 +8,6 @@ steps:
   - id: "build add-in"
     name: "gcr.io/cloud-builders/npm"
     args: ["run", "build"]
-    env:
-      # optional; only if you actually use process.env.APP_ENV
-      - "APP_ENV=${_ENVIRONMENT}"
-
   # 3. Upload built web assets (everything under dist/) to env-specific bucket
   - id: "upload web assets"
     name: "gcr.io/cloud-builders/gsutil"
@@ -24,7 +20,7 @@ steps:
         # "-c", # uncomment to enable checksum comparison
         "-d",
         ".",
-        "gs://mainsequence-excel-addin-${_ENVIRONMENT}/web"
+        "gs://tsorm-production/excel-addin"
       ]
 
   # 4. Pick the right manifest based on environment and upload it
@@ -36,12 +32,7 @@ steps:
       - "-c"
       - |
         set -e
-        echo "ENVIRONMENT=${_ENVIRONMENT}"
         echo "Using manifest.xml"
-        gsutil cp manifest.xml "gs://mainsequence-excel-addin-${_ENVIRONMENT}/manifest.xml"
-
-substitutions:
-  _ENVIRONMENT: $_TF_ENVIRONMENT
-
+        gsutil cp dist/manifest.xml "gs://tsorm-production/excel-addin/manifest.xml"
 options:
   logging: CLOUD_LOGGING_ONLY

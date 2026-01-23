@@ -12,7 +12,7 @@ with a simple login and one custom function.
 
 ## Tech Used
 
-React, Fluent UI, Office.js, Webpack, Vercel.
+React, Fluent UI, Office.js, Webpack.
 
 ## How to Run (Developers)
 
@@ -38,13 +38,15 @@ React, Fluent UI, Office.js, Webpack, Vercel.
 
 ## Deployment
 
-Push to GitHub to trigger a Vercel build.\
-After deployment, update the production URL inside `manifest.xml`.
+Production builds rewrite `manifest.xml` with the GCS base URL and upload the built assets to the bucket.
+GCS base: `https://storage.googleapis.com/tsorm-production/excel-addin/`
+Manifest URL: `https://storage.googleapis.com/tsorm-production/excel-addin/manifest.xml`
+If you want a friendly URL (e.g. `https://main-sequence.app/excel-addin`), have Django redirect to that manifest.
 
 ### GCP Bucket config
 Here is the summary of the commands to run in your Google Cloud Shell (or local terminal) to permanently fix CORS and file type issues for your Excel Add-in bucket.
 
-Replace YOUR_BUCKET_NAME with your actual bucket (e.g., mainsequence-excel-addin-development).
+Bucket: `gs://tsorm-production` (assets live under `/excel-addin/`).
 
 #### Step 1: Create the CORS configuration file
 Run this single command to create a file named cors.json with permissive settings (allows all origins) in your current folder.
@@ -58,7 +60,7 @@ This pushes the rule to Google Cloud.
 
 ```Bash
 
-gcloud storage buckets update gs://YOUR_BUCKET_NAME --cors-file=cors.json
+gcloud storage buckets update gs://tsorm-production --cors-file=cors.json
 ```
 #### Step 3: Fix Content Types (The "Hidden" Fix)
 Even with CORS fixed, Excel will reject your files if Google thinks they are "text/plain". Run these to force them to be executable code.
@@ -66,16 +68,16 @@ Even with CORS fixed, Excel will reject your files if Google thinks they are "te
 ```Bash
 
 # Fix the JSON manifest/metadata
-gsutil setmeta -h "Content-Type:application/json" gs://YOUR_BUCKET_NAME/web/functions.json
+gsutil setmeta -h "Content-Type:application/json" gs://tsorm-production/excel-addin/functions.json
 
 # Fix the JavaScript logic
-gsutil setmeta -h "Content-Type:application/javascript" gs://YOUR_BUCKET_NAME/web/functions.js
+gsutil setmeta -h "Content-Type:application/javascript" gs://tsorm-production/excel-addin/functions.js
 ```
 Step 4: Verify it worked
 Run this "fake request" to see if the bucket responds with the correct permission headers.
 
 ```Bash
 
-curl -I -H "Origin: https://excel.officeapps.live.com" https://storage.googleapis.com/YOUR_BUCKET_NAME/web/functions.json
+curl -I -H "Origin: https://excel.officeapps.live.com" https://storage.googleapis.com/tsorm-production/excel-addin/functions.json
 ```
 Success Indicator: You should see this line in the output: access-control-allow-origin: *
