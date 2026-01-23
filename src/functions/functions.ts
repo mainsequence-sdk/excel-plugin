@@ -73,6 +73,21 @@ const coerce1DStringList = (value: unknown): string[] => {
   return normalized;
 };
 
+const isCustomFunctionsError = (value: unknown): value is { code?: string; message?: string } => {
+  return typeof value === "object" && value !== null && "code" in value && "message" in value;
+};
+
+const findFirstCustomFunctionsError = (value: unknown): { code?: string; message?: string } | null => {
+  if (isCustomFunctionsError(value)) return value;
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = findFirstCustomFunctionsError(item);
+      if (found) return found;
+    }
+  }
+  return null;
+};
+
 
 
 
@@ -114,12 +129,15 @@ export const FetchData = async (
   unique_identifier_list,
   node_identifier,
   limit,          // Dynamically passed
-  storage_hash, // optional; mutually exclusive with node_identifier
   columns
 ) => {
   const accessToken = await OfficeRuntime.storage.getItem("token");
   const refreshToken = await OfficeRuntime.storage.getItem("refresh_token");
   const apiBaseUrl = await getApiBaseUrl();
+
+  if (!accessToken) {
+    throw new Error("Missing access token. Please sign in again.");
+  }
 
   const makeRequest = async (token) => {
     const myHeaders = new Headers();
@@ -135,8 +153,7 @@ export const FetchData = async (
       unique_identifier_list: normalizedUniqueIdentifiers,
       columns: normalizedColumns.length > 0 ? normalizedColumns : null,
       limit: limit,   // Use the passed limit
-      node_identifier: node_identifier,
-      storage_hash: storage_hash
+      node_identifier: node_identifier
     });
 
     console.log(" Request Payload:", raw);
@@ -190,25 +207,30 @@ export const FetchData = async (
  * @customfunction
  * @param {string} start_date Start date (e.g., "2022-01-01")
  * @param {string} end_date End date (e.g., "2022-01-31")
- * @param {string[]} unique_identifier_list List of unique identifiers (e.g., ["BBG000C1S2X2", "BBG000QH56C1"])
+ * @param {string[][]} unique_identifier_list List/range of unique identifiers (row or column range is flattened to 1D)
  * @param {string} node_identifier node_identifier cell reference
  * @param {number} [pageSize=1000] The number of rows to fetch per page.
- * @param {string} [storage_hash] Storage hash used to fetch stored node data.
- * @param {string[]} [columns] List of columns to return (e.g., ["col_a", "col_b"])
+ * @param {string[][]} [columns] List/range of columns to return (row or column range is flattened to 1D)
  * @returns {Promise<string[][]>} A 2D array of data including headers and potentially a "More data available" message.
  */
 
-async function GET_DATA(start_date, end_date, unique_identifier_list, node_identifier, pageSize = 1000, storage_hash = null, columns = null) {
+async function GET_DATA(start_date, end_date, unique_identifier_list, node_identifier, pageSize = 1000, columns = null) {
   try {
-    const flat_unique_identifier_list = coerce1DStringList(unique_identifier_list);
-    // If caller passes columns as the 6th arg (omitting storage_hash), accept it.
-    let rawStorageHash = storage_hash;
-    let rawColumns = columns;
-    if (Array.isArray(rawStorageHash) && (rawColumns === null || rawColumns === undefined)) {
-      rawColumns = rawStorageHash;
-      rawStorageHash = null;
+    const inputError = findFirstCustomFunctionsError([
+      start_date,
+      end_date,
+      unique_identifier_list,
+      node_identifier,
+      pageSize,
+      columns,
+    ]);
+    if (inputError) {
+      const msg = inputError.message || inputError.code || "Invalid input";
+      return [["Error", msg]];
     }
-    const flat_columns = coerce1DStringList(rawColumns);
+
+    const flat_unique_identifier_list = coerce1DStringList(unique_identifier_list);
+    const flat_columns = coerce1DStringList(columns);
 
     const normalizeParam = (value: unknown) => {
       if (value === null || value === undefined) return null;
@@ -218,14 +240,9 @@ async function GET_DATA(start_date, end_date, unique_identifier_list, node_ident
     };
 
     const normalizedNodeIdentifier = normalizeParam(node_identifier);
-    const normalizedStorageHash = normalizeParam(rawStorageHash);
 
-    if (!normalizedNodeIdentifier && !normalizedStorageHash) {
-      return [["Error", "Provide either node_identifier or storage_hash."]];
-    }
-
-    if (normalizedNodeIdentifier && normalizedStorageHash) {
-      return [["Error", "Provide only one of node_identifier or storage_hash."]];
+    if (!normalizedNodeIdentifier) {
+      return [["Error", "Provide node_identifier."]];
     }
 
     const dataResponse = await FetchData(
@@ -234,7 +251,6 @@ async function GET_DATA(start_date, end_date, unique_identifier_list, node_ident
       flat_unique_identifier_list,
       normalizedNodeIdentifier,
       pageSize,
-      normalizedStorageHash,
       flat_columns
     );
 
