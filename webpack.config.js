@@ -17,6 +17,18 @@ async function getHttpsOptions() {
 
 module.exports = async (env, options) => {
   const dev = options.mode === "development";
+  const metadataGuardKey = "__MS_CUSTOM_FUNCTIONS_METADATA_APPLIED__";
+  class CustomFunctionsMetadataPluginNoChild {
+    constructor(pluginOptions) {
+      this.pluginOptions = pluginOptions;
+    }
+    apply(compiler) {
+      if (compiler.isChild && compiler.isChild()) return;
+      if (globalThis[metadataGuardKey]) return;
+      globalThis[metadataGuardKey] = true;
+      new CustomFunctionsMetadataPlugin(this.pluginOptions).apply(compiler);
+    }
+  }
   const config = {
     devtool: "source-map",
     entry: {
@@ -72,7 +84,7 @@ module.exports = async (env, options) => {
           },
         ],
       }),
-      new CustomFunctionsMetadataPlugin({
+      new CustomFunctionsMetadataPluginNoChild({
         output: "functions.json",
         input: "./src/functions/functions.ts",
       }),

@@ -50,6 +50,29 @@ const toUnixSeconds = (
   return null;
 };
 
+const coerce1DStringList = (value: unknown): string[] => {
+  const normalized: string[] = [];
+
+  const normalizeItem = (item: unknown): string | null => {
+    if (item === null || item === undefined) return null;
+    const trimmed = String(item).trim();
+    if (!trimmed || trimmed.toLowerCase() === "null") return null;
+    return trimmed;
+  };
+
+  const walk = (item: unknown): void => {
+    if (Array.isArray(item)) {
+      item.forEach(walk);
+      return;
+    }
+    const norm = normalizeItem(item);
+    if (norm !== null) normalized.push(norm);
+  };
+
+  walk(value);
+  return normalized;
+};
+
 
 
 
@@ -90,15 +113,12 @@ export const FetchData = async (
   end_date,
   unique_identifier_list,
   node_identifier,
-  great_or_equal, // This will now be a boolean
-  less_or_equal,  // This will now be a boolean
   limit,          // Dynamically passed
-  offset,       // Dynamically passed
-  update_hash, //null for now
+  storage_hash, // optional; mutually exclusive with node_identifier
+  columns
 ) => {
-  console.log(update_hash);
-  const accessToken = await localStorage.getItem("token");
-  const refreshToken = await localStorage.getItem("refresh_token");
+  const accessToken = await OfficeRuntime.storage.getItem("token");
+  const refreshToken = await OfficeRuntime.storage.getItem("refresh_token");
   const apiBaseUrl = await getApiBaseUrl();
 
   const makeRequest = async (token) => {
@@ -106,19 +126,17 @@ export const FetchData = async (
     myHeaders.append("Content-Type", "application/json");
     myHeaders.append("Authorization", `Bearer ${token}`);
 
+    const normalizedUniqueIdentifiers = coerce1DStringList(unique_identifier_list);
+    const normalizedColumns = coerce1DStringList(columns);
+
     const raw = JSON.stringify({
       start_date: toUnixSeconds(start_date),
       end_date: toUnixSeconds(end_date),
-      great_or_equal: great_or_equal, // Ensure this is a boolean
-      less_or_equal: less_or_equal,   // Ensure this is a boolean
-      unique_identifier_list: Array.isArray(unique_identifier_list)
-        ? unique_identifier_list
-        : [],
-      columns: null,
+      unique_identifier_list: normalizedUniqueIdentifiers,
+      columns: normalizedColumns.length > 0 ? normalizedColumns : null,
       limit: limit,   // Use the passed limit
-      offset: offset, // Use the passed offset
       node_identifier: node_identifier,
-      update_hash: null
+      storage_hash: storage_hash
     });
 
     console.log(" Request Payload:", raw);
@@ -172,39 +190,55 @@ export const FetchData = async (
  * @customfunction
  * @param {string} start_date Start date (e.g., "2022-01-01")
  * @param {string} end_date End date (e.g., "2022-01-31")
- * @param {string[][]} unique_identifier_list List of unique identifiers (e.g., [["BBG000C1S2X2"], ["BBG000QH56C1"]])
+ * @param {string[]} unique_identifier_list List of unique identifiers (e.g., ["BBG000C1S2X2", "BBG000QH56C1"])
  * @param {string} node_identifier node_identifier cell reference
- * @param {boolean} great_or_equal Include data greater than or equal to start date (should be TRUE/FALSE)
- * @param {boolean} less_or_equal Include data less than or equal to end date (should be TRUE/FALSE)
  * @param {number} [pageSize=1000] The number of rows to fetch per page.
- * @param {number} [offset=0] The starting offset for pagination.
- * @param {string} update_hash The starting offset for pagination.
+ * @param {string} [storage_hash] Storage hash used to fetch stored node data.
+ * @param {string[]} [columns] List of columns to return (e.g., ["col_a", "col_b"])
  * @returns {Promise<string[][]>} A 2D array of data including headers and potentially a "More data available" message.
  */
 
-async function GET_DATA(start_date, end_date, unique_identifier_list, node_identifier, great_or_equal, less_or_equal, pageSize = 1000, offset = 0, update_hash = null) {
+async function GET_DATA(start_date, end_date, unique_identifier_list, node_identifier, pageSize = 1000, storage_hash = null, columns = null) {
   try {
-    // Flatten unique_identifier_list if it's a 2D array from Excel input
-    const flat_unique_identifier_list = unique_identifier_list ? unique_identifier_list.flat().filter(item => item !== "") : [];
+    const flat_unique_identifier_list = coerce1DStringList(unique_identifier_list);
+    // If caller passes columns as the 6th arg (omitting storage_hash), accept it.
+    let rawStorageHash = storage_hash;
+    let rawColumns = columns;
+    if (Array.isArray(rawStorageHash) && (rawColumns === null || rawColumns === undefined)) {
+      rawColumns = rawStorageHash;
+      rawStorageHash = null;
+    }
+    const flat_columns = coerce1DStringList(rawColumns);
 
-    // Ensure great_or_equal and less_or_equal are actual booleans
-    const isGreatOrEqual = typeof great_or_equal === 'boolean' ? great_or_equal : String(great_or_equal).toLowerCase() === 'true';
-    const isLessOrEqual = typeof less_or_equal === 'boolean' ? less_or_equal : String(less_or_equal).toLowerCase() === 'true';
+    const normalizeParam = (value: unknown) => {
+      if (value === null || value === undefined) return null;
+      const trimmed = String(value).trim();
+      if (!trimmed || trimmed.toLowerCase() === "null") return null;
+      return trimmed;
+    };
+
+    const normalizedNodeIdentifier = normalizeParam(node_identifier);
+    const normalizedStorageHash = normalizeParam(rawStorageHash);
+
+    if (!normalizedNodeIdentifier && !normalizedStorageHash) {
+      return [["Error", "Provide either node_identifier or storage_hash."]];
+    }
+
+    if (normalizedNodeIdentifier && normalizedStorageHash) {
+      return [["Error", "Provide only one of node_identifier or storage_hash."]];
+    }
 
     const dataResponse = await FetchData(
       start_date,
       end_date,
       flat_unique_identifier_list,
-      node_identifier,
-      isGreatOrEqual,
-      isLessOrEqual,
+      normalizedNodeIdentifier,
       pageSize,
-      offset,
-      update_hash
+      normalizedStorageHash,
+      flat_columns
     );
 
     const results = Array.isArray(dataResponse) ? dataResponse : dataResponse.results;
-    const nextOffset = dataResponse.next_offset;
 
     if (!results || results.length === 0) {
       console.log("No records found.");
@@ -233,15 +267,13 @@ async function GET_DATA(start_date, end_date, unique_identifier_list, node_ident
 
     const finalOutput: string[][] = [];
 
-    // Only add headers if it's the first page (offset 0)
-    if (offset === 0) {
-      finalOutput.push(headers);
-    }
+    // Always add headers for first (and only) page
+    finalOutput.push(headers);
     finalOutput.push(...dataRows);
 
     // If there's more data, add a special row to indicate this
-    if (nextOffset !== null && dataResponse.returned_count === pageSize) {
-      const msg = `More data available. Next offset: ${nextOffset}. Page size: ${pageSize}`;
+    if (typeof dataResponse.next_offset === "number" && dataResponse.returned_count === pageSize) {
+      const msg = `More data available. Increase page size or use API pagination. Page size: ${pageSize}`;
       finalOutput.push([msg, ...Array(headers.length - 1).fill("")]);
     }
 
@@ -322,41 +354,58 @@ export const FetchAsset = async (unique_identifier: string) => {
  * Excel Custom Function: Get asset details by unique identifier
  * @customfunction
  * @param {string} unique_identifier The unique identifier of the asset (e.g., "90_CBPF_48")
- * @returns {Promise<string[][]>} A 2D array with keys in column 1, values in column 2
+ * @param {boolean} [spill_rows=true] If TRUE, return rows of field/value pairs; if FALSE, return a single JSON cell.
+ * @returns {Promise<any[][]>} A 2D array suitable for Excel.
  */
-async function GET_ASSET(unique_identifier: string): Promise<string[][]> {
+async function GET_ASSET(unique_identifier: string, spill_rows: boolean = true): Promise<any[][]> {
   try {
     if (!unique_identifier || String(unique_identifier).trim() === "") {
       return [["Error", "unique_identifier is required"]];
     }
 
+    const normalizedSpill = typeof spill_rows === "boolean"
+      ? spill_rows
+      : String(spill_rows).toLowerCase() === "true";
+
     const response = await FetchAsset(String(unique_identifier).trim());
     const asset = response && response.results && response.results.length > 0 ? response.results[0] : null;
 
     if (!asset) {
-      return [["Error", "No asset found"]];
+      return [["Error", "Asset not found."]];
     }
 
     const MAX_EXCEL_CHARS = 32760;
-    const safeString = (val: any) => {
-      if (val === undefined || val === null) return "";
-      const s = String(val);
+    const safeString = (val: string) => {
+      const s = val ?? "";
       return s.length > MAX_EXCEL_CHARS ? s.slice(0, MAX_EXCEL_CHARS) + " ...[truncated]" : s;
     };
 
-    const rows: string[][] = [];
+    const jsonReplacer = (_key: string, value: any) => {
+      if (value instanceof Date) return value.toISOString();
+      return value;
+    };
 
-    // Iterate through all keys in results[0] and create key/value rows
-    Object.keys(asset).forEach((key) => {
-      const val = (asset as any)[key];
-      // If value is nested object/array, store as JSON string; otherwise as string
-      const valueStr = (typeof val === "object" && val !== null)
-        ? safeString(JSON.stringify(val))
-        : safeString(val);
-      rows.push([key, valueStr]);
-    });
+    const serializeValue = (val: any): any => {
+      if (val === undefined || val === null) return "";
+      if (val instanceof Date) return val;
+      if (Array.isArray(val) || typeof val === "object") {
+        return safeString(JSON.stringify(val, jsonReplacer));
+      }
+      if (typeof val === "string") return safeString(val);
+      return val;
+    };
 
-    return rows;
+    if (normalizedSpill) {
+      const rows: any[][] = [["field", "value"]];
+      Object.keys(asset).forEach((key) => {
+        const val = (asset as any)[key];
+        rows.push([key, serializeValue(val)]);
+      });
+      return rows;
+    }
+
+    const payload = safeString(JSON.stringify(asset, jsonReplacer));
+    return [[payload]];
   } catch (err) {
     console.error("Error in GET_ASSET:", err);
     return [["Error", (err as any).message || "Unknown error"]];
@@ -364,6 +413,79 @@ async function GET_ASSET(unique_identifier: string): Promise<string[][]> {
 }
 
 CustomFunctions.associate("GET_ASSET", GET_ASSET);
+
+/**
+ * Excel Custom Function: Get a specific asset field by dot path
+ * @customfunction
+ * @param {string} unique_identifier The unique identifier of the asset (e.g., "90_CBPF_48")
+ * @param {string} field_path Dot-separated field path (e.g., "current_snapshot.ticker")
+ * @returns {Promise<any[][]>} A single-cell 2D array containing the field value.
+ */
+async function GET_ASSET_FIELD(unique_identifier: string, field_path: string): Promise<any[][]> {
+  try {
+    if (!unique_identifier || String(unique_identifier).trim() === "") {
+      return [["Error", "unique_identifier is required"]];
+    }
+    if (!field_path || String(field_path).trim() === "") {
+      return [["Error", "field_path is required"]];
+    }
+
+    const response = await FetchAsset(String(unique_identifier).trim());
+    const asset = response && response.results && response.results.length > 0 ? response.results[0] : null;
+
+    if (!asset) {
+      return [["Error", "Asset not found."]];
+    }
+
+    const MAX_EXCEL_CHARS = 32760;
+    const safeString = (val: string) => {
+      const s = val ?? "";
+      return s.length > MAX_EXCEL_CHARS ? s.slice(0, MAX_EXCEL_CHARS) + " ...[truncated]" : s;
+    };
+
+    const jsonReplacer = (_key: string, value: any) => {
+      if (value instanceof Date) return value.toISOString();
+      return value;
+    };
+
+    const serializeValue = (val: any): any => {
+      if (val === undefined || val === null) return "";
+      if (val instanceof Date) return val;
+      if (Array.isArray(val) || typeof val === "object") {
+        return safeString(JSON.stringify(val, jsonReplacer));
+      }
+      if (typeof val === "string") return safeString(val);
+      return val;
+    };
+
+    let current: any = asset;
+    const parts = String(field_path).split(".");
+    for (const part of parts) {
+      if (current === null || current === undefined) {
+        throw new Error(`Unable to resolve field '${field_path}': null/undefined`);
+      }
+      if (Array.isArray(current) && /^\d+$/.test(part)) {
+        const idx = Number(part);
+        if (idx >= current.length) {
+          throw new Error(`Unable to resolve field '${field_path}': index out of range`);
+        }
+        current = current[idx];
+        continue;
+      }
+      if (typeof current !== "object" || !(part in current)) {
+        throw new Error(`Unable to resolve field '${field_path}': missing '${part}'`);
+      }
+      current = (current as any)[part];
+    }
+
+    return [[serializeValue(current)]];
+  } catch (err) {
+    console.error("Error in GET_ASSET_FIELD:", err);
+    return [["Error", (err as any).message || "Unknown error"]];
+  }
+}
+
+CustomFunctions.associate("GET_ASSET_FIELD", GET_ASSET_FIELD);
 
 
 function safeParse(json: string): any | null {

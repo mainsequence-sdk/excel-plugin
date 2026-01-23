@@ -393,16 +393,7 @@ const Login = () => {
               FetchData(
                 "1/1/2000",
                 null,
-                [],
-                true,
-                true,
-                (result, error) => {
-                  if (result) {
-                    console.log("Results:", result.results);
-                  } else {
-                    console.error("Error:", error);
-                  }
-                }
+                []
               );
             }}
           >

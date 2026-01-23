@@ -4,9 +4,6 @@ export const FetchData = async (
   start_date,
   end_date,
   unique_identifier_list,
-  great_or_equal,
-  less_or_equal,
-  offset,
   // callback
 ) => {
   const apiBaseUrl = await getApiBaseUrl();
@@ -23,11 +20,8 @@ export const FetchData = async (
   const raw = JSON.stringify({
     start_date: toUnixSeconds(start_date),
     end_date: toUnixSeconds(end_date),
-    great_or_equal: great_or_equal ?? true,
-    less_or_equal: less_or_equal ?? true,
     unique_identifier_list: unique_identifier_list ?? [],
     columns: null,
-    offset: offset,
   });
 
   const requestOptions: any = {

@@ -30,13 +30,13 @@ React, Fluent UI, Office.js, Webpack.
    start_date = cell reference
    end_date = cell reference
    unique_identifier_list = empty cell reference for now getting data from `get_data_between_dates_from_node_identifier` API
-   update_hash = can bee a empty cell reference or any string to complete the parameters it's an optional currently hardcoded in code as `null`
+   storage_hash = can be an empty cell reference or any string to complete the parameters; optional and defaults to `null`
 
 - start_date = cell reference
 - end_date = cell reference
 - unique_identifier_list = empty cell reference for now getting data from get_data_between_dates_from_node_identifier API
 - discount_curves = E8 cell reference → `discount_curves`
-- update_hash = can bee a empty cell reference or any string to complete the parameters it's an optional currently hardcoded in code as null
+- storage_hash = can be an empty cell reference or any string to complete the parameters; optional and defaults to null
 
   ` =MainSequence.GET_DATA(C8, D8, A10:A11,E8, TRUE, TRUE, 500, 0,"null")`
 
