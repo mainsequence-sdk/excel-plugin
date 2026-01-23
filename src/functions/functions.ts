@@ -379,9 +379,12 @@ async function GET_ASSET(unique_identifier: string, spill_rows: boolean = true):
       return [["Error", "unique_identifier is required"]];
     }
 
-    const normalizedSpill = typeof spill_rows === "boolean"
-      ? spill_rows
-      : String(spill_rows).toLowerCase() === "true";
+    const normalizedSpill = 
+      spill_rows === undefined || spill_rows === null
+        ? true
+        : typeof spill_rows === "boolean"
+          ? spill_rows
+          : String(spill_rows).toLowerCase() === "true";
 
     const response = await FetchAsset(String(unique_identifier).trim());
     const asset = response && response.results && response.results.length > 0 ? response.results[0] : null;
@@ -419,6 +422,7 @@ async function GET_ASSET(unique_identifier: string, spill_rows: boolean = true):
       });
       return rows;
     }
+
 
     const payload = safeString(JSON.stringify(asset, jsonReplacer));
     return [[payload]];
