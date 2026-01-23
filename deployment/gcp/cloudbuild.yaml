@@ -20,7 +20,7 @@ steps:
         # "-c", # uncomment to enable checksum comparison
         "-d",
         ".",
-        "gs://tsorm-production/excel-addin"
+        "gs://ms-excel-addin"
       ]
 
   # 4. Pick the right manifest based on environment and upload it
@@ -33,6 +33,6 @@ steps:
       - |
         set -e
         echo "Using manifest.xml"
-        gsutil cp dist/manifest.xml "gs://tsorm-production/excel-addin/manifest.xml"
+        gsutil cp dist/manifest.xml "gs://ms-excel-addin/manifest.xml"
 options:
   logging: CLOUD_LOGGING_ONLY

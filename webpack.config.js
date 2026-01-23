@@ -8,7 +8,7 @@ const webpack = require("webpack");
 const Dotenv = require('dotenv-webpack');
 
 const urlDev = "https://localhost:3000/";
-const urlProd = "https://storage.googleapis.com/tsorm-production/excel-addin/";
+const urlProd = "https://storage.googleapis.com/ms-excel-addin/";
 
 async function getHttpsOptions() {
   const httpsOptions = await devCerts.getHttpsServerOptions();

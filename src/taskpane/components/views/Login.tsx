@@ -3,7 +3,6 @@ import {
   Input,
   Button,
   Title1,
-  Body1,
   Caption1,
   Card,
   makeStyles,
@@ -90,12 +89,6 @@ const useStyles = makeStyles({
   },
   title: {
     textAlign: 'center',
-    justifyContent: 'center',
-    width: '100%'
-  },
-  subtitle: {
-    textAlign: 'center',
-    color: tokens.colorNeutralForeground2,
     justifyContent: 'center',
     width: '100%'
   },
@@ -283,7 +276,6 @@ const Login = () => {
           <div className={styles.headerRow}>
             <div className={styles.headerText}>
               <Title1 className={styles.title}>Sign In</Title1>
-              <Body1 className={styles.subtitle}>Sign in with your Main Sequence credentials</Body1>
             </div>
             <Dialog open={settingsOpen} onOpenChange={(_, data) => setSettingsOpen(data.open)}>
               <DialogTrigger disableButtonEnhancement>
@@ -347,7 +339,7 @@ const Login = () => {
                 disabled={loading}
               />
               <div className={styles.forgotPassword}>
-                <Link href="#" disabled={loading}>
+                <Link href="http://main-sequence.app" disabled={loading}>
                   Forgot Password?
                 </Link>
               </div>

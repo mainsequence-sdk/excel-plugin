@@ -38,6 +38,10 @@
         "--app",
         "excel"
       ],
+      "dependsOn": [
+        "Build (Development)"
+      ],
+      "dependsOrder": "sequence",
       "presentation": {
         "clear": true,
         "panel": "dedicated"
@@ -76,6 +80,10 @@
         "--document",
         "${workspaceFolder}/examples/data_nodes_intro.xlsx"
       ],
+      "dependsOn": [
+        "Build (Development)"
+      ],
+      "dependsOrder": "sequence",
       "presentation": {
         "clear": true,
         "panel": "dedicated"
@@ -96,6 +104,10 @@
         "--document",
         "${workspaceFolder}/examples/data_nodes_intro.xlsx"
       ],
+      "dependsOn": [
+        "Build (Development)"
+      ],
+      "dependsOrder": "sequence",
       "isBackground": true,
       "presentation": {
         "clear": true,
