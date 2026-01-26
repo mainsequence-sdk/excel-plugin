@@ -1,3 +1,4 @@
+import { data } from "react-router-dom";
 import { getApiBaseUrl } from "../shared/apiConfig";
 
 /**
@@ -333,6 +334,119 @@ async function GET_DATA(start_date, end_date, unique_identifier_list, node_ident
 
 CustomFunctions.associate("GET_DATA", GET_DATA);
 
+
+
+/**
+ * Excel Custom Function: Fetch and show table in Excel with pagination hint
+ * @customfunction
+ * @param {string} start_date Start date (e.g., "2022-01-01")
+ * @param {string} end_date End date (e.g., "2022-01-31")
+ * @param {string[][]} unique_identifier_list List/range of unique identifiers (row or column range is flattened to 1D)
+ * @param {string} node_identifier node_identifier cell reference
+ * @param {string} data_field The specific data field to return
+ * @param {number} [pageSize=1000] The number of rows to fetch per page.
+ * @param {string[][]} [columns] List/range of columns to return (row or column range is flattened to 1D)
+ * @returns {Promise<string[][]>} A 2D array of data including headers and potentially a "More data available" message.
+ */
+
+async function GET_ASSET_DATA_FIELD(start_date, end_date, unique_identifier_list, node_identifier, data_field, pageSize = 1000, columns = null) {
+  try {
+    const inputError = findFirstCustomFunctionsError([
+      start_date,
+      end_date,
+      unique_identifier_list,
+      node_identifier,
+      pageSize,
+      columns,
+    ]);
+    if (inputError) {
+      const msg = inputError.message || inputError.code || "Invalid input";
+      return [["Error", msg]];
+    }
+
+    const flat_unique_identifier_list = coerce1DStringList(unique_identifier_list);
+    const flat_columns = coerce1DStringList(columns);
+
+    const normalizeParam = (value: unknown) => {
+      if (value === null || value === undefined) return null;
+      const trimmed = String(value).trim();
+      if (!trimmed || trimmed.toLowerCase() === "null") return null;
+      return trimmed;
+    };
+
+    const normalizedNodeIdentifier = normalizeParam(node_identifier);
+
+    if (!normalizedNodeIdentifier) {
+      return [["Error", "Provide node_identifier."]];
+    }
+
+    const dataResponse = await FetchData(
+      start_date,
+      end_date,
+      flat_unique_identifier_list,
+      normalizedNodeIdentifier,
+      pageSize,
+      flat_columns
+    );
+
+    const results = Array.isArray(dataResponse) ? dataResponse : dataResponse.results;
+
+    if (!results || results.length === 0) {
+      console.log("No records found.");
+      return [["Info", "No data found for given filters"]];
+    }
+
+    // Dynamically get all unique keys from results
+    const allKeys = new Set<string>();
+    results.forEach((item: Record<string, any>) => {
+      Object.keys(item).forEach(key => allKeys.add(key));
+    });
+    const ALLOWED_KEYS = [
+      "time_index",
+      "unique_identifier",
+      data_field
+    ];
+
+    const headers = ALLOWED_KEYS.filter(key =>
+      results.some(item => key in item)
+    );
+    // const headers = Array.from(allKeys) as string[];
+
+
+    // helper: make values Excel-safe (primitive + length limit)
+    const safeString = (val: any) => {
+      if (val === undefined || val === null) return "";
+      const s = String(val);
+      const MAX_EXCEL_CHARS = 32760; // leave small margin under 32,767
+      return s.length > MAX_EXCEL_CHARS ? s.slice(0, MAX_EXCEL_CHARS) + `... [truncated ${s.length}]` : s;
+    };
+
+    // Dynamically map results to rows based on headers
+    const dataRows = results.map((item: Record<string, any>) =>
+      headers.map((key: string) => safeString(item[key]))
+    );
+
+    const finalOutput: string[][] = [];
+
+    // Always add headers for first (and only) page
+    finalOutput.push(headers);
+    finalOutput.push(...dataRows);
+
+    // If there's more data, add a special row to indicate this
+    if (typeof dataResponse.next_offset === "number" && dataResponse.returned_count === pageSize) {
+      const msg = `More data available. Increase page size or use API pagination. Page size: ${pageSize}`;
+      finalOutput.push([msg, ...Array(headers.length - 1).fill("")]);
+    }
+
+    console.log("Returning cleaned data:", finalOutput.length, "rows (including headers/message)");
+    return finalOutput;
+  } catch (error) {
+    console.error(" Error in GET_DATA:", error);
+    return [["Error", (error && (error as any).message) || "Unknown error"]];
+  }
+}
+
+CustomFunctions.associate("GET_ASSET_DATA_FIELD", GET_ASSET_DATA_FIELD);
 
 
 
