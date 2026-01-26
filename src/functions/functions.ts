@@ -120,15 +120,18 @@ const refresh = async (refreshToken) => {
   return response.json(); // { access: "...", refresh: "..." }
 };
 
+
 /**
  * Fetch data from your backend with pagination support
+ * Checks offset and loops until all data is fetched
+ * v2
  */
 export const FetchData = async (
   start_date,
   end_date,
   unique_identifier_list,
   node_identifier,
-  limit,          // Dynamically passed
+  limit,
   columns
 ) => {
   const accessToken = await OfficeRuntime.storage.getItem("token");
@@ -147,46 +150,70 @@ export const FetchData = async (
     const normalizedUniqueIdentifiers = coerce1DStringList(unique_identifier_list);
     const normalizedColumns = coerce1DStringList(columns);
 
-    const raw = JSON.stringify({
-      start_date: toUnixSeconds(start_date),
-      end_date: toUnixSeconds(end_date),
-      unique_identifier_list: normalizedUniqueIdentifiers,
-      columns: normalizedColumns.length > 0 ? normalizedColumns : null,
-      limit: limit,   // Use the passed limit
-      node_identifier: node_identifier
-    });
+    let offset = 0;
+    let allResults: any[] = [];
+    let lastResponseJson: any = null;
 
-    console.log(" Request Payload:", raw);
+    while (true) {
+      const raw = JSON.stringify({
+        start_date: toUnixSeconds(start_date),
+        end_date: toUnixSeconds(end_date),
+        unique_identifier_list: normalizedUniqueIdentifiers,
+        columns: normalizedColumns.length > 0 ? normalizedColumns : null,
+        limit: limit,
+        offset: offset,                
+        node_identifier: node_identifier
+      });
 
-    const response = await fetch(
-      `${apiBaseUrl}/orm/api/ts_manager/dynamic_table/get_data_between_dates_from_node_identifier/`,
-      // `${APIURI}/orm/api/ts_manager/dynamic_table/714/get_data_between_dates_from_remote/`,
-      {
-        method: "POST",
-        headers: myHeaders,
-        body: raw,
-        redirect: "follow",
+      console.log("Request Payload:", raw);
+
+      const response = await fetch(
+        `${apiBaseUrl}/orm/api/ts_manager/dynamic_table/get_data_between_dates_from_node_identifier/`,
+        {
+          method: "POST",
+          headers: myHeaders,
+          body: raw,
+          redirect: "follow",
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTPS ${response.status}: ${errorText}`);
       }
-    );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTPS ${response.status}: ${errorText}`);
+      const responseJson = await response.json();
+      lastResponseJson = responseJson;
+
+      const chunk = responseJson?.results ?? [];
+      allResults.push(...chunk);
+
+      const nextOffset = responseJson?.next_offset;
+
+      
+      if (!nextOffset) {
+        break;
+      }
+
+      offset = nextOffset;
     }
 
-    return response.json();
+    
+    return {
+      ...lastResponseJson,
+      results: allResults
+    };
   };
 
   try {
     const result = await makeRequest(accessToken);
-    console.log(" Data fetched successfully:", result);
+    console.log("Data fetched successfully:", result);
     return result;
   } catch (error) {
-    console.warn(" Error fetching data:", error.message);
+    console.warn("Error fetching data:", error.message);
 
-    // If token expired or invalid — try refresh
     if (error.message.includes("token_not_valid") || error.message.includes("401")) {
-      console.log(" Refreshing token...");
+      console.log("Refreshing token...");
       const newTokens = await refresh(refreshToken);
 
       await OfficeRuntime.storage.setItem("token", newTokens.access);
@@ -201,6 +228,8 @@ export const FetchData = async (
     throw error;
   }
 };
+
+//=============================================================================
 
 /**
  * Excel Custom Function: Fetch and show table in Excel with pagination hint
@@ -267,6 +296,7 @@ async function GET_DATA(start_date, end_date, unique_identifier_list, node_ident
       Object.keys(item).forEach(key => allKeys.add(key));
     });
     const headers = Array.from(allKeys) as string[];
+
 
     // helper: make values Excel-safe (primitive + length limit)
     const safeString = (val: any) => {
