@@ -1,0 +1,161 @@
+{
+    "allowCustomDataForDataTypeAny": true,
+    "functions": [
+        {
+            "description": "Excel Custom Function: Fetch and show table in Excel with pagination hint",
+            "id": "GET_DATA",
+            "name": "GET_DATA",
+            "parameters": [
+                {
+                    "description": "Start date (e.g., \"2022-01-01\")",
+                    "name": "start_date",
+                    "type": "string"
+                },
+                {
+                    "description": "End date (e.g., \"2022-01-31\")",
+                    "name": "end_date",
+                    "type": "string"
+                },
+                {
+                    "description": "List/range of unique identifiers (row or column range is flattened to 1D)",
+                    "dimensionality": "matrix",
+                    "name": "unique_identifier_list",
+                    "type": "string"
+                },
+                {
+                    "description": "node_identifier cell reference",
+                    "name": "node_identifier",
+                    "type": "string"
+                },
+                {
+                    "description": "The number of rows to fetch per page.",
+                    "name": "pageSize",
+                    "optional": true,
+                    "type": "number"
+                },
+                {
+                    "description": "List/range of columns to return (row or column range is flattened to 1D)",
+                    "dimensionality": "matrix",
+                    "name": "columns",
+                    "optional": true,
+                    "type": "string"
+                }
+            ],
+            "result": {
+                "dimensionality": "matrix",
+                "type": "string"
+            }
+        },
+        {
+            "description": "Excel Custom Function: Fetch and show table in Excel with pagination hint",
+            "id": "GET_ASSET_DATA_FIELD",
+            "name": "GET_ASSET_DATA_FIELD",
+            "parameters": [
+                {
+                    "description": "Start date (e.g., \"2022-01-01\")",
+                    "name": "start_date",
+                    "type": "string"
+                },
+                {
+                    "description": "End date (e.g., \"2022-01-31\")",
+                    "name": "end_date",
+                    "type": "string"
+                },
+                {
+                    "description": "List/range of unique identifiers (row or column range is flattened to 1D)",
+                    "dimensionality": "matrix",
+                    "name": "unique_identifier_list",
+                    "type": "string"
+                },
+                {
+                    "description": "node_identifier cell reference",
+                    "name": "node_identifier",
+                    "type": "string"
+                },
+                {
+                    "description": "The specific data field to return",
+                    "name": "data_field",
+                    "type": "string"
+                },
+                {
+                    "description": "The number of rows to fetch per page.",
+                    "name": "pageSize",
+                    "optional": true,
+                    "type": "number"
+                },
+                {
+                    "description": "List/range of columns to return (row or column range is flattened to 1D)",
+                    "dimensionality": "matrix",
+                    "name": "columns",
+                    "optional": true,
+                    "type": "string"
+                }
+            ],
+            "result": {
+                "dimensionality": "matrix",
+                "type": "string"
+            }
+        },
+        {
+            "description": "Excel Custom Function: Get asset details by unique identifier",
+            "id": "GET_ASSET",
+            "name": "GET_ASSET",
+            "parameters": [
+                {
+                    "description": "The unique identifier of the asset (e.g., \"90_CBPF_48\")",
+                    "name": "unique_identifier",
+                    "type": "string"
+                },
+                {
+                    "description": "If TRUE, return rows of field/value pairs; if FALSE, return a single JSON cell.",
+                    "name": "spill_rows",
+                    "optional": true,
+                    "type": "boolean"
+                }
+            ],
+            "result": {
+                "dimensionality": "matrix"
+            }
+        },
+        {
+            "description": "Excel Custom Function: Get a specific asset field by dot path",
+            "id": "GET_ASSET_FIELD",
+            "name": "GET_ASSET_FIELD",
+            "parameters": [
+                {
+                    "description": "The unique identifier of the asset (e.g., \"90_CBPF_48\")",
+                    "name": "unique_identifier",
+                    "type": "string"
+                },
+                {
+                    "description": "Dot-separated field path (e.g., \"current_snapshot.ticker\")",
+                    "name": "field_path",
+                    "type": "string"
+                }
+            ],
+            "result": {
+                "dimensionality": "matrix"
+            }
+        },
+        {
+            "description": "Excel Custom Function\nGET_JSON_VALUE(jsonText, keyPath)",
+            "id": "GET_JSON_VALUE",
+            "name": "GET_JSON_VALUE",
+            "parameters": [
+                {
+                    "description": "The JSON text stored in a cell",
+                    "name": "jsonText",
+                    "type": "string"
+                },
+                {
+                    "description": "Dot-notation key path (e.g., \"key2.s1\")",
+                    "name": "keyPath",
+                    "type": "string"
+                }
+            ],
+            "result": {
+                "type": "string"
+            }
+        }
+    ]
+}
