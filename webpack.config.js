@@ -3,7 +3,6 @@
 const devCerts = require("office-addin-dev-certs");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const CustomFunctionsMetadataPlugin = require("custom-functions-metadata-plugin");
 const webpack = require("webpack");
 const Dotenv = require('dotenv-webpack');
 
@@ -17,18 +16,6 @@ async function getHttpsOptions() {
 
 module.exports = async (env, options) => {
   const dev = options.mode === "development";
-  const metadataGuardKey = "__MS_CUSTOM_FUNCTIONS_METADATA_APPLIED__";
-  class CustomFunctionsMetadataPluginNoChild {
-    constructor(pluginOptions) {
-      this.pluginOptions = pluginOptions;
-    }
-    apply(compiler) {
-      if (compiler.isChild && compiler.isChild()) return;
-      if (globalThis[metadataGuardKey]) return;
-      globalThis[metadataGuardKey] = true;
-      new CustomFunctionsMetadataPlugin(this.pluginOptions).apply(compiler);
-    }
-  }
   const config = {
     devtool: "source-map",
     entry: {
@@ -84,10 +71,6 @@ module.exports = async (env, options) => {
           },
         ],
       }),
-      new CustomFunctionsMetadataPluginNoChild({
-        output: "functions.json",
-        input: "./src/functions/functions.ts",
-      }),
       new HtmlWebpackPlugin({
         filename: "taskpane.html",
         template: "./src/taskpane/taskpane.html",
@@ -98,6 +81,10 @@ module.exports = async (env, options) => {
           {
             from: "assets/*",
             to: "assets/[name][ext][query]",
+          },
+          {
+            from: "functions.json",
+            to: "functions.json",
           },
           {
             from: "manifest*.xml",

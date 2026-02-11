@@ -2,28 +2,11 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Excel Desktop (Sample workbook)",
-      "type": "pwa-msedge",
-      "request": "attach",
-      "useWebView": true,
-      "port": 9222,
-      "urlFilter": "https://localhost:3000/*",
-      "timeout": 600000,
-      "webRoot": "${workspaceFolder}",
-      "preLaunchTask": "Debug: Excel Desktop (Sample workbook)",
-      "postDebugTask": "Stop Debug (Sample workbook)"
-    },
-    {
-      "name": "Excel Desktop (One-step)",
-      "type": "pwa-msedge",
-      "request": "attach",
-      "useWebView": true,
-      "port": 9222,
-      "urlFilter": "https://localhost:3000/*",
-      "timeout": 600000,
-      "webRoot": "${workspaceFolder}",
-      "preLaunchTask": "Debug: Excel Desktop (One-step)",
-      "postDebugTask": "Stop Debug"
+      "name": "Debug (Mac)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "bash ./scripts/debug-mac.sh",
+      "cwd": "${workspaceFolder}"
     }
   ]
 }

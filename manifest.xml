@@ -9,8 +9,8 @@
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="MainSequence"/>
   <Description DefaultValue="Write your own Excel functions in JavaScript."/>
-  <IconUrl DefaultValue="https://localhost:3000/assets/icon-128.png"/>
-  <HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/icon-128.png"/>
+  <IconUrl DefaultValue="https://main-sequence.app/static/media/logos/emblem.png"/>
+  <HighResolutionIconUrl DefaultValue="https://main-sequence.app/static/media/logos/emblem.png"/>
   <SupportUrl DefaultValue="https://www.contoso.com/help"/>
   <AppDomains>
     <AppDomain>https://login.microsoftonline.com</AppDomain>
@@ -87,9 +87,9 @@
     </Hosts>
     <Resources>
       <bt:Images>
-        <bt:Image id="Icon.16x16" DefaultValue="https://localhost:3000/assets/icon-16.png"/>
-        <bt:Image id="Icon.32x32" DefaultValue="https://localhost:3000/assets/icon-32.png"/>
-        <bt:Image id="Icon.80x80" DefaultValue="https://localhost:3000/assets/icon-128.png"/>
+        <bt:Image id="Icon.16x16" DefaultValue="https://main-sequence.app/static/media/logos/emblem.png"/>
+        <bt:Image id="Icon.32x32" DefaultValue="https://main-sequence.app/static/media/logos/emblem.png"/>
+        <bt:Image id="Icon.80x80" DefaultValue="https://main-sequence.app/static/media/logos/emblem.png"/>
       </bt:Images>
       <bt:Urls>
         <bt:Url id="Functions.Script.Url" DefaultValue="https://localhost:3000/functions.js"/>

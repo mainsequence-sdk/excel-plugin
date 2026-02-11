@@ -12,9 +12,9 @@
     "dev_server_port": 3000
   },
   "scripts": {
-    "build": "node ./run-with-localstorage.js webpack --mode production",
-    "build:dev": "node ./run-with-localstorage.js webpack --mode development",
-    "dev-server": "node ./run-with-localstorage.js webpack serve --mode development",
+    "build": "node ./scripts/generate-functions-metadata.js && node ./run-with-localstorage.js webpack --mode production",
+    "build:dev": "node ./scripts/generate-functions-metadata.js && node ./run-with-localstorage.js webpack --mode development",
+    "dev-server": "node ./scripts/generate-functions-metadata.js && node ./run-with-localstorage.js webpack serve --mode development",
     "lint": "office-addin-lint check",
     "lint:fix": "office-addin-lint fix",
     "prettier": "office-addin-lint prettier",
